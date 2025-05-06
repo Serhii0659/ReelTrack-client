@@ -1,10 +1,15 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
+// Кольори для секторів графіку
+const COLORS = ['#979797', '#626366'];
+
+const data = [
+  { name: "Фільми", value: 12 },
+  { name: "Серіали", value: 18 },
+];
 
 const RatingPieChart = ({
-  data,
   width = 425,
   height = 300,
   cx = '50%',
