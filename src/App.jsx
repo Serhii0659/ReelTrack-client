@@ -1,20 +1,22 @@
-import React from 'react'; 
-import { Routes, Route, Navigate } from 'react-router-dom'; 
-import { useAuth } from './context/AuthContext'; 
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/HomePage';  
-import ProfilePage from './pages/ProfilePage'; 
-import FriendsPage from './pages/FriendsPage'; // Імпортуємо сторінку "Друзі"
-import Footer from './components/Footer'; 
+import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
+import FriendsPage from './pages/FriendsPage';
+import MyLibraryPage from './pages/MyLibraryPage';
+import AboutUs from './pages/AboutUs';
+import Footer from './components/Footer';
 
 const App = () => {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex-grow">
-                <AppRoutes /> 
+                <AppRoutes />
             </div>
-            <Footer /> 
+            <Footer />
         </div>
     );
 };
@@ -28,25 +30,40 @@ const AppRoutes = () => {
 
     return (
         <Routes>
+            {/* Сторінка "About Us" за замовчуванням */}
             <Route
                 path="/"
-                element={isAuthenticated ? <HomePage /> : <Navigate to="/login" replace />}
+                element={<AboutUs />}
             />
+            {/* Сторінка логіна */}
             <Route
                 path="/login"
-                element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" replace />}
+                element={<LoginPage />}
             />
+            {/* Сторінка реєстрації */}
             <Route
                 path="/register"
-                element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/" replace />}
+                element={<RegisterPage />}
             />
+            {/* Домашня сторінка */}
+            <Route
+                path="/home"
+                element={isAuthenticated ? <HomePage /> : <Navigate to="/login" replace />}
+            />
+            {/* Профіль */}
             <Route
                 path="/profile"
                 element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" replace />}
             />
+            {/* Друзі */}
             <Route
-                path="/friends" // Додаємо маршрут для сторінки "Друзі"
+                path="/friends"
                 element={isAuthenticated ? <FriendsPage /> : <Navigate to="/login" replace />}
+            />
+            {/* Бібліотека */}
+            <Route
+                path="/library"
+                element={isAuthenticated ? <MyLibraryPage /> : <Navigate to="/login" replace />}
             />
         </Routes>
     );
