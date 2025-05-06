@@ -7,13 +7,13 @@ const initialFriendsList = [
     id: 1,
     name: 'Марія',
     email: 'maria@example.com',
-    avatar: 'https://i.pravatar.cc/150?u=alexey',
+    avatar: 'https://i.pravatar.cc/150?u=alexey', // Змінено для унікальності
   },
   {
     id: 2,
     name: 'Олексій',
     email: 'alexey@example.com',
-    avatar: 'https://i.pravatar.cc/150?u=maria',
+    avatar: 'https://i.pravatar.cc/150?u=maria', // Змінено для унікальності
   },
   {
     id: 3,
@@ -34,10 +34,10 @@ const FriendsPage = () => {
 
   const handleAddFriend = () => {
     const newFriendData = {
-      id: friendsList.length + 1,
+      id: friendsList.length ? Math.max(...friendsList.map(f => f.id)) + 1 : 1, // Більш надійний ID
       name: newFriend.name,
       email: newFriend.email,
-      avatar: `https://i.pravatar.cc/150?u=${newFriend.email}`,
+      avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(newFriend.email)}`, // Кодування email для URL
     };
     setFriendsList([...friendsList, newFriendData]);
     setShowAddFriendModal(false);
@@ -61,18 +61,19 @@ const FriendsPage = () => {
       {/* Додаємо хедер */}
       <Header />
 
-      <div className="p-6">
+      {/* ЗМІНА ТУТ: додано pt-[64px] до основного контейнера контенту */}
+      <div className="p-6 pt-[100px]"> 
         <h1 className="text-4xl font-bold text-center mb-20">Ваші Друзі</h1>
         <div className="max-w-4xl mx-auto mb-6 flex justify-between">
           <button
             onClick={() => setShowAddFriendModal(true)}
-            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg"
+            className="bg-gray-500 hover:bg-gray-600 text-white subheading py-3 px-6 rounded-lg"
           >
             Додати 
           </button>
           <button
             onClick={() => setShowRemoveFriendModal(true)}
-            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg"
+            className="bg-gray-500 hover:bg-gray-600 text-white subheading py-3 px-6 rounded-lg"
           >
             Видалити 
           </button>
@@ -100,7 +101,7 @@ const FriendsPage = () => {
 
       {/* Модальне вікно для додавання друга */}
       {showAddFriendModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[1001]"> {/* Додано вищий z-index */}
           <div className="bg-[#272727] p-6 rounded-lg shadow-md w-96">
             <h2 className="text-2xl font-bold mb-4 text-center">Додати Друга</h2>
             <div className="mb-4">
@@ -109,7 +110,7 @@ const FriendsPage = () => {
                 type="text"
                 value={newFriend.name}
                 onChange={(e) => setNewFriend({ ...newFriend, name: e.target.value })}
-                className="w-full p-2 rounded-lg bg-[#171717] text-white focus:outline-none"
+                className="w-full p-2 rounded-lg bg-[#171717] text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
               />
             </div>
             <div className="mb-4">
@@ -118,19 +119,19 @@ const FriendsPage = () => {
                 type="email"
                 value={newFriend.email}
                 onChange={(e) => setNewFriend({ ...newFriend, email: e.target.value })}
-                className="w-full p-2 rounded-lg bg-[#171717] text-white focus:outline-none"
+                className="w-full p-2 rounded-lg bg-[#171717] text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
               />
             </div>
             <div className="flex justify-between">
               <button
                 onClick={() => setShowAddFriendModal(false)}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"
+                className="bg-gray-500 hover:bg-gray-600 text-white subheading py-2 px-4 rounded-lg"
               >
                 Скасувати
               </button>
               <button
                 onClick={handleAddFriend}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"
+                className="bg-gray-500 hover:bg-gray-600 text-white subheading py-2 px-4 rounded-lg"
               >
                 Додати
               </button>
@@ -139,8 +140,9 @@ const FriendsPage = () => {
         </div>
       )}
 
-        {showRemoveFriendModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
+        {/* Модальне вікно для видалення друга */}
+      {showRemoveFriendModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-[1001]"> {/* Додано вищий z-index */}
             <div className="bg-[#1f1f1f] p-8 rounded-xl shadow-2xl w-96 relative">
             <h2 className="text-3xl font-extrabold text-center text-white mb-6">Видалити Друга</h2>
             <div className="mb-6">
@@ -172,13 +174,13 @@ const FriendsPage = () => {
             <div className="flex justify-between mt-6">
                 <button
                 onClick={() => setShowRemoveFriendModal(false)}
-                className="bg-[#626366]  hover:bg-gray-500 text-[#979797] font-bold py-2 px-6 rounded-lg transition"
+                className="bg-[#626366]  hover:bg-gray-500 text-[#979797] subheading py-2 px-6 rounded-lg transition"
                 >
                 Скасувати
                 </button>
                 <button
                 onClick={confirmRemoveFriend}
-                className={`py-2 px-6 rounded-lg font-bold transition ${
+                className={`py-2 px-6 rounded-lg subheading transition ${
                     friendToRemove
                     ? "bg-[#626366]  hover:bg-gray-500 transition text-[#979797]"
                     : "bg-gray-500 text-gray-300 cursor-not-allowed"
