@@ -29,8 +29,8 @@ function LoginPage() {
         className="absolute bg-cover bg-no-repeat"
         style={{
             width: '615px',
-            height: '820px',
-            left: 'calc(100% - 620px)',
+            height: '800px',
+            left: 'calc(100% - 600px)',
             top: '-50px',
             backgroundImage: 'url(/src/image/imageLogin.jpg)'
         }}

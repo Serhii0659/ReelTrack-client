@@ -1,36 +1,61 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext'; // Імпортуємо useAuth
+import Header from '../components/Header';
+import NowWatching from '../components/NowWatching';
+import NewReleases from '../components/NewReleases';
+import ReviewTabs from '../components/ReviewTabs';
+import SocialFeed from '../components/SocialFeed';
+import RatingPieChart from '../components/RatingPieChart';
+import { useAuth } from '../context/AuthContext';
 
-function HomePage() {
-const { logout, user } = useAuth(); // Отримуємо logout і дані користувача
+const HomePage = () => {
+  const { user } = useAuth();
 
-const handleLogout = () => {
-    logout(); // Викликаємо logout з контексту
-};
+  const contentStats = [
+    { name: 'Фільми', value: 12 },
+    { name: 'Серіали', value: 8 },
+    { name: 'Мультфільми', value: 5 },
+  ];
 
-return (
-    <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-blue-600">
-                    ReelTrack - Home
-                </h1>
-                <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                    Logout
-                </button>
+  return (
+    <div className="bg-[#171717] min-h-screen flex flex-col">
+      <Header />
+
+      {/* Основний контент */}
+      <main className="flex-grow p-4 pt-[72px]">
+        <div className="max-w-screen-xl mx-auto">
+          {/* Заголовок сторінки */}
+          <h1 className="text-white font-bold text-[48px] text-center mb-8">
+            Твій особистий світ кіно
+          </h1>
+
+          {/* Контейнер для сітки 2x1 з компонентами */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid-item">
+              <NewReleases />
             </div>
-            {/* Вітаємо користувача */}
-            {user && (
-                <p className="text-lg mb-4">Welcome back, <span className="font-semibold">{user.name}</span>!</p>
-            )}
-            <p>You have successfully logged in.</p>
-            {/* Тут буде основний контент вашого трекера */}
-        </div>
+            <div className="grid-item">
+              <NowWatching />
+            </div>
+          </div>
+
+          {/* Відгуки та Соціальна стрічка з горизонтальним відступом */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-60 gap-y-4 mt-6">
+            <div className="grid-item">
+              <ReviewTabs />
+            </div>
+            <div className="grid-item">  
+              <SocialFeed />
+            </div>
+          </div>
+
+          {/* Пай-чарт по центру */}
+          <div className="flex justify-center mt-8">
+            <RatingPieChart data={contentStats} />
+          </div>
+        </div> {/* ← Цей div був незакритий */}
+      </main>
     </div>
-);
-}
+  );
+};
 
 export default HomePage;
