@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import AddDropdown from './AddDropdown';
 
 function Header() {
   const { logout } = useAuth();
@@ -28,18 +27,18 @@ function Header() {
   }, []);
 
   // Навігація
-  const goToHome = () => navigate('/');
+  const goToHome = () => navigate('/home'); // Змінено з '/' на '/home'
   const goToFriends = () => navigate('/friends');
-  const goToAbout = () => navigate('/about');
+  const goToLibrary = () => navigate('/library');
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-[#171717] h-[64px] z-[1000] px-6 shadow-md">
+    <header className="fixed top-0 left-0 w-full bg-[#272727] h-[64px] z-[1000] px-6 shadow-md">
       <div className="max-w-screen-xl mx-auto h-full flex items-center justify-between">
         {/* Логотип */}
-        <h1 className="text-2xl font-bold text-white">ReelTrack</h1>
+        <h1 className="text-2xl font-bold text-white cursor-pointer" onClick={goToHome}>ReelTrack</h1>
 
         {/* Навігація */}
-        <nav className="flex items-center gap-8">
+        <nav className="flex items-center gap-60">
           <div
             className="cursor-pointer font-['IBM Plex Mono'] font-bold text-white hover:text-gray-300"
             onClick={goToHome}
@@ -54,26 +53,20 @@ function Header() {
           </div>
           <div
             className="cursor-pointer font-['IBM Plex Mono'] font-bold text-white hover:text-gray-300"
-            onClick={goToAbout}
+            onClick={goToLibrary}
           >
-            Про нас
+            Моя бібліотека
           </div>
         </nav>
 
-        {/* Додати контент + Меню користувача */}
-        <div className="relative flex items-center gap-4" ref={menuRef}>
-          <AddDropdown />
-
-          <button
+        {/* Меню акаунта */}
+        <div className="relative" ref={menuRef}>
+          <FaUserCircle
+            className="text-white cursor-pointer text-2xl"
             onClick={toggleMenu}
-            className="text-white text-3xl focus:outline-none"
-            title="Меню"
-          >
-            <FaUserCircle />
-          </button>
-
+          />
           {menuOpen && (
-            <div className="absolute right-0 top-[64px] w-40 bg-[#333] rounded shadow-lg z-50 flex flex-col">
+            <div className="absolute right-0 top-full mt-2 w-40 bg-[#333] rounded shadow-lg z-50 flex flex-col">
               <button
                 className="w-full text-left px-4 py-2 text-white hover:bg-[#444]"
                 onClick={handleAccountClick}
