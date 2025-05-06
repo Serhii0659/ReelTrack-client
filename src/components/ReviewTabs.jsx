@@ -12,20 +12,15 @@ const ReviewTabs = () => {
             { title: 'Дивні дива', rating: 4 },
             { title: 'Темні справи', rating: 3 }
         ],
-        Мультфільми: [
+        Фільми: [
             { title: 'Шрек', rating: 5 },
             { title: 'Кунг-фу Панда', rating: 4 },
             { title: 'Льодовиковий період', rating: 3 }
         ],
-        Фільми: [
-            { title: 'Початок', rating: 5 },
-            { title: 'Інтерстеллар', rating: 5 },
-            { title: 'Джокер', rating: 4 }
-        ]
     };
 
     const handleSeeMoreClick = () => {
-        navigate('/profile');
+        navigate('/library');
     };
 
     return (
@@ -54,7 +49,7 @@ const ReviewTabs = () => {
             <div className="flex justify-center mt-5">
                 <button
                     onClick={handleSeeMoreClick}
-                    className="bg-[#626366] text-[#979797] font-bold px-10 py-2 rounded-full hover:bg-gray-500 transition"
+                    className="bg-[#626366] text-[#979797] subheading px-10 py-2 rounded-full hover:bg-gray-500 transition"
                 >
                     Переглянути ще
                 </button>
