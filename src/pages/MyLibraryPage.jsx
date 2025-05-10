@@ -1,86 +1,152 @@
-import React, { useState } from 'react';
+// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\pages\MyLibraryPage.jsx
+import React, { useEffect, useState } from 'react';
+import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import SeriesCard from '../components/SeriesCard';
-import ReviewItem from '../components/ReviewItem';
 import SearchBar from '../components/SearchBar';
-import Header from '../components/Header';
 
-const MyLibraryPage = ({
-  movies = [],
-  series = [],
-  reviews = [],
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
+import { fetchUserLibrary, removeContentFromUserLibrary } from '../api/user'; 
 
-  const filteredMovies = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const MyLibraryPage = () => {
+    const { isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
 
-  const filteredSeries = series.filter((item) =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    const [libraryContent, setLibraryContent] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  return (
-    <div className="bg-[#171717] min-h-screen text-white">
-      <Header />
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            toast.info('Будь ласка, увійдіть, щоб переглянути свою бібліотеку.');
+            return;
+        }
 
-      <div className="max-w-5xl mx-auto px-4 pt-24 pb-12">
-        <h1 className="text-3xl font-bold mb-6">Моя бібліотека</h1>
+        const loadUserLibrary = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await fetchUserLibrary();
+                setLibraryContent(Array.isArray(data.items) ? data.items : []);
+            } catch (err) {
+                console.error('Помилка завантаження бібліотеки:', err);
+                setError(err.message || 'Не вдалося завантажити вашу бібліотеку.');
+                toast.error('Не вдалося завантажити вашу бібліотеку.');
+                if (err.response?.status === 401) {
+                    toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
+                    logout();
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        {/* Пошук */}
-        <SearchBar
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        loadUserLibrary();
+    }, [isAuthenticated, navigate, logout]);
 
-        {/* Фільми */}
-        {filteredMovies.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-4">📁 Бібліотека фільмів</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredMovies.map((movie) => (
-                <MovieCard key={movie.id} movie={movie} />
-              ))}
+    const handleRemoveContent = async (contentId, title) => {
+        if (!window.confirm(`Ви впевнені, що хочете видалити "${title}" зі своєї бібліотеки?`)) {
+            return;
+        }
+
+        try {
+            await removeContentFromUserLibrary(contentId);
+            toast.success(`"${title}" успішно видалено з бібліотеки!`);
+            setLibraryContent(prev => prev.filter(item => item._id !== contentId));
+        } catch (err) {
+            console.error(`Помилка при видаленні контенту "${title}":`, err);
+            const msg = err.response?.data?.message || 'Не вдалося видалити контент.';
+            toast.error(msg);
+            setError(msg);
+        }
+    };
+
+    if (!isAuthenticated) {
+        return null; 
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">
+                Завантаження бібліотеки...
             </div>
-          </section>
-        )}
+        );
+    }
 
-        {/* Серіали */}
-        {filteredSeries.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-4">📺 Бібліотека серіалів</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredSeries.map((item) => (
-                <SeriesCard key={item.id} series={item} />
-              ))}
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500">
+                Помилка: {error}
             </div>
-          </section>
-        )}
+        );
+    }
 
-        {/* Відгуки */}
-        {reviews.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">📝 Список відгуків</h2>
-            <div className="space-y-4">
-              {reviews.map((review, index) => (
-                <ReviewItem key={index} review={review} />
-              ))}
+    // Розділяємо контент на фільми та серіали
+    const moviesInLibrary = libraryContent.filter(item => item.mediaType === 'movie');
+    const seriesInLibrary = libraryContent.filter(item => item.mediaType === 'tv');
+
+    return (
+        <div className="bg-[#171717] min-h-screen text-white pt-24">
+            <Header />
+            <div className="container mx-auto p-6">
+                <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Моя Бібліотека</h1>
+                
+                {/* Компонент SearchBar для глобального пошуку */}
+                <div className="mb-8 flex justify-center">
+                    <SearchBar />
+                </div>
+
+                {libraryContent.length === 0 ? (
+                    <div className="text-center text-gray-400 text-lg">
+                        <p className="mb-4">У вашій бібліотеці поки що немає контенту.</p>
+                        <p>Додайте фільми або серіали, щоб відстежувати їх!</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Секція для фільмів */}
+                        <div className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 text-white text-center">Фільми</h2>
+                            {moviesInLibrary.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {moviesInLibrary.map(item => (
+                                        <MovieCard key={item._id} item={item} onRemove={handleRemoveContent} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 text-lg">
+                                    <p>У вашій бібліотеці поки що немає фільмів.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Горизонтальний розділювач, якщо є і фільми, і серіали */}
+                        {(moviesInLibrary.length > 0 && seriesInLibrary.length > 0) && (
+                            <hr className="my-10 border-gray-500" />
+                        )}
+                        
+                        {/* Секція для серіалів */}
+                        <div className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 text-[#e50914] text-center">Серіали</h2>
+                            {seriesInLibrary.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {seriesInLibrary.map(item => (
+                                        <SeriesCard key={item._id} item={item} onRemove={handleRemoveContent} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 text-lg">
+                                    <p>У вашій бібліотеці поки що немає серіалів.</p>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
-          </section>
-        )}
-
-        {/* Порожня бібліотека */}
-        {filteredMovies.length === 0 &&
-          filteredSeries.length === 0 &&
-          reviews.length === 0 && (
-            <p className="text-gray-400">
-              Нічого не знайдено за запитом. Спробуйте інший пошук або додайте
-              контент до бібліотеки.
-            </p>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default MyLibraryPage;
