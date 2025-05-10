@@ -114,7 +114,7 @@ const FriendsPage = () => {
     }
 };
     if (!isAuthenticated) {
-        return null; // Перенаправлення вже відбувається в useEffect
+        return null; 
     }
 
     if (loading) {

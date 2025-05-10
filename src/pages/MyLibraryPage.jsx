@@ -3,50 +3,36 @@ import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios'; // Для прямого запиту до бекенду
+import { useNavigate } from 'react-router-dom';
+import MovieCard from '../components/MovieCard';
+import SeriesCard from '../components/SeriesCard';
+import SearchBar from '../components/SearchBar';
 
-// --- Додані імпорти компонентів ---
-import MovieCard from '../components/MovieCard'; 
-import SeriesCard from '../components/SeriesCard'; 
-import ReviewItem from '../components/ReviewItem'; 
-import SearchBar from '../components/SearchBar'; 
-// -----------------------------------
-
-// Базовий URL вашого серверного API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import { fetchUserLibrary, removeContentFromUserLibrary } from '../api/user'; 
 
 const MyLibraryPage = () => {
     const { isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
 
-    const [libraryItems, setLibraryItems] = useState([]);
+    const [libraryContent, setLibraryContent] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'watching', 'completed', 'plan_to_watch', 'dropped'
-    const [searchTerm, setSearchTerm] = useState(''); // Стан для пошукового запиту
 
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/login');
-            toast.info('Будь ласка, увійдіть, щоб переглянути вашу бібліотеку.');
+            toast.info('Будь ласка, увійдіть, щоб переглянути свою бібліотеку.');
             return;
         }
 
-        const fetchUserWatchlist = async () => {
+        const loadUserLibrary = async () => {
             setLoading(true);
             setError(null);
             try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('Користувач не авторизований.');
-                }
-                const response = await axios.get(`${API_BASE_URL}/api/watchlist`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setLibraryItems(response.data.items); // <--- Виправлено тут: тепер отримуємо саме масив items
+                const data = await fetchUserLibrary();
+                setLibraryContent(Array.isArray(data.items) ? data.items : []);
             } catch (err) {
-                console.error('Помилка при отриманні списку перегляду:', err.response?.data || err.message);
+                console.error('Помилка завантаження бібліотеки:', err);
                 setError(err.message || 'Не вдалося завантажити вашу бібліотеку.');
                 toast.error('Не вдалося завантажити вашу бібліотеку.');
                 if (err.response?.status === 401) {
@@ -58,28 +44,34 @@ const MyLibraryPage = () => {
             }
         };
 
-        fetchUserWatchlist();
+        loadUserLibrary();
     }, [isAuthenticated, navigate, logout]);
 
-    // Функція для фільтрації та пошуку
-    const filteredAndSearchedItems = libraryItems.filter(item => {
-        // Фільтрація за статусом
-        const statusMatch = filterStatus === 'all' || item.status === filterStatus;
+    const handleRemoveContent = async (contentId, title) => {
+        if (!window.confirm(`Ви впевнені, що хочете видалити "${title}" зі своєї бібліотеки?`)) {
+            return;
+        }
 
-        // Пошук за назвою (без врахування регістру)
-        const searchMatch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-
-        return statusMatch && searchMatch;
-    });
+        try {
+            await removeContentFromUserLibrary(contentId);
+            toast.success(`"${title}" успішно видалено з бібліотеки!`);
+            setLibraryContent(prev => prev.filter(item => item._id !== contentId));
+        } catch (err) {
+            console.error(`Помилка при видаленні контенту "${title}":`, err);
+            const msg = err.response?.data?.message || 'Не вдалося видалити контент.';
+            toast.error(msg);
+            setError(msg);
+        }
+    };
 
     if (!isAuthenticated) {
-        return null; // Перенаправлення вже відбувається в useEffect
+        return null; 
     }
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">
-                Завантаження вашої бібліотеки...
+                Завантаження бібліотеки...
             </div>
         );
     }
@@ -92,77 +84,66 @@ const MyLibraryPage = () => {
         );
     }
 
+    // Розділяємо контент на фільми та серіали
+    const moviesInLibrary = libraryContent.filter(item => item.mediaType === 'movie');
+    const seriesInLibrary = libraryContent.filter(item => item.mediaType === 'tv');
+
     return (
         <div className="bg-[#171717] min-h-screen text-white pt-24">
             <Header />
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Моя Бібліотека</h1>
-
-                {/* SearchBar тут */}
-                <div className="mb-8">
-                    <SearchBar /> {/* Тепер йому не потрібні пропси searchTerm та onSearchChange */}
+                
+                {/* Компонент SearchBar для глобального пошуку */}
+                <div className="mb-8 flex justify-center">
+                    <SearchBar />
                 </div>
 
-                {/* Фільтри */}
-                <div className="flex justify-center mb-8 space-x-4 flex-wrap gap-2">
-                    <button
-                        onClick={() => setFilterStatus('all')}
-                        className={`py-2 px-4 rounded-lg transition-colors ${filterStatus === 'all' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                    >
-                        Всі
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('watching')}
-                        className={`py-2 px-4 rounded-lg transition-colors ${filterStatus === 'watching' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                    >
-                        Переглядаю
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('completed')}
-                        className={`py-2 px-4 rounded-lg transition-colors ${filterStatus === 'completed' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                    >
-                        Переглянуто
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('plan_to_watch')}
-                        className={`py-2 px-4 rounded-lg transition-colors ${filterStatus === 'plan_to_watch' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                    >
-                        Планую
-                    </button>
-                    <button
-                        onClick={() => setFilterStatus('dropped')}
-                        className={`py-2 px-4 rounded-lg transition-colors ${filterStatus === 'dropped' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                    >
-                        Призупинено
-                    </button>
-                </div>
-
-                {filteredAndSearchedItems.length === 0 && (
-                    <p className="text-center text-gray-400 text-xl mt-10">
-                        Ваша бібліотека за цим статусом порожня або не знайдено за запитом.
-                        <br />
-                        <Link to="/explore" className="text-blue-500 hover:underline">
-                            Досліджуйте та додавайте контент!
-                        </Link>
-                    </p>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {/* Використовуємо MovieCard або SeriesCard */}
-                    {filteredAndSearchedItems.map(item => (
-                        <React.Fragment key={item._id}>
-                            {item.mediaType === 'movie' ? (
-                                <MovieCard movie={item} /> // Передаємо об'єкт фільму в MovieCard
+                {libraryContent.length === 0 ? (
+                    <div className="text-center text-gray-400 text-lg">
+                        <p className="mb-4">У вашій бібліотеці поки що немає контенту.</p>
+                        <p>Додайте фільми або серіали, щоб відстежувати їх!</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Секція для фільмів */}
+                        <div className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 text-white text-center">Фільми</h2>
+                            {moviesInLibrary.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {moviesInLibrary.map(item => (
+                                        <MovieCard key={item._id} item={item} onRemove={handleRemoveContent} />
+                                    ))}
+                                </div>
                             ) : (
-                                <SeriesCard series={item} /> // Передаємо об'єкт серіалу в SeriesCard
+                                <div className="text-center text-gray-400 text-lg">
+                                    <p>У вашій бібліотеці поки що немає фільмів.</p>
+                                </div>
                             )}
-                            {/* Приклад розміщення ReviewItem, якщо ви хочете відображати відгуки тут */}
-                            {/* {item.reviews && item.reviews.map(review => (
-                                <ReviewItem key={review._id} review={review} />
-                            ))} */}
-                        </React.Fragment>
-                    ))}
-                </div>
+                        </div>
+
+                        {/* Горизонтальний розділювач, якщо є і фільми, і серіали */}
+                        {(moviesInLibrary.length > 0 && seriesInLibrary.length > 0) && (
+                            <hr className="my-10 border-gray-500" />
+                        )}
+                        
+                        {/* Секція для серіалів */}
+                        <div className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 text-[#e50914] text-center">Серіали</h2>
+                            {seriesInLibrary.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {seriesInLibrary.map(item => (
+                                        <SeriesCard key={item._id} item={item} onRemove={handleRemoveContent} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 text-lg">
+                                    <p>У вашій бібліотеці поки що немає серіалів.</p>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -146,7 +146,7 @@ const ProfilePage = () => {
         <div className="bg-[#171717] min-h-screen text-white pt-24">
             <Header />
             <div className="container mx-auto p-6">
-                <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Ваш Профіль</h1>
+                <h1 className="text-4xl font-bold mb-8 text-center text-white">Ваш Профіль</h1>
 
                 <div className="bg-[#1e1e1e] p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
                     {error && (
