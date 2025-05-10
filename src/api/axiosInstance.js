@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Визначаємо базовий URL для API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

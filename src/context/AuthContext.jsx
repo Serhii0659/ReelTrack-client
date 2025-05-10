@@ -1,114 +1,110 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axiosInstance from '../api/axiosInstance'; // Створимо цей файл далі
-import { useNavigate } from 'react-router-dom';
+// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\context\AuthContext.jsx
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
+// Базовий URL вашого серверного API (повинен бути в .env)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 export const AuthProvider = ({ children }) => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('authToken'));
-    const [loading, setLoading] = useState(true); // Для перевірки початкового стану
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true); // Додано стан завантаження
 
     useEffect(() => {
         const checkAuth = async () => {
-            const storedToken = localStorage.getItem('authToken');
-            if (storedToken) {
-                setToken(storedToken);
-                // TODO: Додати запит для перевірки валідності токена на бекенді
-                // та отримання актуальних даних користувача.
-                // Наприклад, створити ендпоінт /api/auth/me
-                // Поки що розкодуємо токен (не найнадійніший спосіб без перевірки)
+            const token = localStorage.getItem('token');
+            console.log('Frontend: Token from localStorage in checkAuth (before trim):', token); // Для налагодження
+
+            if (token) {
+                // Видаляємо будь-які зайві пробіли (включно з новими рядками) з токена
+                const trimmedToken = token.trim();
+                console.log('Frontend: Token from localStorage in checkAuth (after trim):', trimmedToken); // Для налагодження
+
                 try {
-                    // Дуже спрощено: припускаємо, що якщо токен є, то користувач валідний
-                    // В реальному додатку потрібна перевірка токена на бекенді!
-                    const storedUser = localStorage.getItem('authUser');
-                    if (storedUser) {
-                        setUser(JSON.parse(storedUser));
+                    // Перевіряємо валідність токена на бекенді
+                    const response = await axios.get(`${API_BASE_URL}/api/auth/verify-token`, {
+                        headers: {
+                            Authorization: `Bearer ${trimmedToken}` // ВИКОРИСТОВУЙТЕ ОБРІЗАНИЙ ТОКЕН ТУТ
+                        }
+                    });
+                    if (response.status === 200 && response.data.isValid) {
+                        setIsAuthenticated(true);
+                        setUser(response.data.user); // Припускаємо, що бекенд повертає дані користувача
                     } else {
-                        // Якщо користувача немає в localStorage, але є токен - треба отримати дані
-                        // Або просто видалити токен, якщо немає ендпоінту /me
-                        logout(); // Простіший варіант поки що
+                        localStorage.removeItem('token');
+                        setIsAuthenticated(false);
+                        setUser(null);
                     }
                 } catch (error) {
-                    console.error("Error decoding token or fetching user data:", error);
-                    logout(); // Вийти, якщо токен недійсний або дані не отримано
+                    console.error('Помилка перевірки токена:', error);
+                    localStorage.removeItem('token');
+                    setIsAuthenticated(false);
+                    setUser(null);
                 }
             }
-            setLoading(false);
+            setLoading(false); // Завершуємо завантаження після перевірки
         };
+
         checkAuth();
     }, []);
 
     const login = async (email, password) => {
-        setLoading(true);
         try {
-            const response = await axiosInstance.post('/auth/login', { email, password });
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
+            const { accessToken, user: userData } = response.data;
 
-            // Зберігаємо токени та дані користувача
-            localStorage.setItem('authToken', response.data.accessToken);
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-            localStorage.setItem('authUser', JSON.stringify(response.data.user));
+            console.log('Frontend Login: Received accessToken:', accessToken); // <--- ДОДАНО ЦЕЙ РЯДОК
 
-            setToken(response.data.accessToken);
-            setUser(response.data.user);
-            navigate('/');
+            localStorage.setItem('token', accessToken); // Зберігаємо access token
+            setIsAuthenticated(true);
+            setUser(userData);
+            return response.data;
         } catch (error) {
-            console.error('Login failed:', error.response?.data?.message || error.message);
-            alert('Login failed: ' + (error.response?.data?.message || error.message));
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('authUser');
-            setToken(null);
-            setUser(null);
-        } finally {
-            setLoading(false);
+            console.error('Помилка входу:', error.response?.data?.message || error.message);
+            throw error;
         }
     };
 
-    const register = async (name, email, password) => {
-        setLoading(true);
+    const register = async (username, email, password) => {
         try {
-            await axiosInstance.post('/auth/register', { name, email, password });
-            // Після успішної реєстрації можна автоматично логінити або перенаправляти на логін
-            alert('Registration successful! Please log in.');
-            navigate('/login');
+            const response = await axios.post(`${API_BASE_URL}/api/auth/register`, { name: username, email, password });
+            // При реєстрації сервер може повертати лише повідомлення, а не токен.
+            // Якщо сервер повертає токен при реєстрації, використовуйте його так само, як у login
+            // const { accessToken, user: userData } = response.data;
+            // localStorage.setItem('token', accessToken);
+            // setIsAuthenticated(true);
+            // setUser(userData);
+            return response.data; // Зазвичай при реєстрації не відбувається автоматичний вхід, тому токен не потрібен тут
         } catch (error) {
-            console.error('Registration failed:', error.response?.data?.message || error.message);
-            alert('Registration failed: ' + (error.response?.data?.message || error.message));
-        } finally {
-            setLoading(false);
+            console.error('Помилка реєстрації:', error.response?.data?.message || error.message);
+            throw error;
         }
     };
 
-    const logout = async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-            try {
-                await axiosInstance.post('/auth/logout', { refreshToken });
-            } catch (error) {
-                console.error('Logout failed:', error.response?.data?.message || error.message);
-            }
-        }
-
-        // Очищаємо локальні дані
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('authUser');
-        setToken(null);
+    const logout = () => {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
         setUser(null);
-        navigate('/login');
     };
 
-    const isAuthenticated = !!token && !!user; // Вважаємо автентифікованим, якщо є токен І дані користувача
+    // Показуємо спінер завантаження, поки йде перевірка автентифікації
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">Завантаження автентифікації...</div>;
+    }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, register, loading }}>
-            {!loading && children} {/* Показуємо додаток тільки після завершення перевірки */}
+        <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout }}>
+            {children}
         </AuthContext.Provider>
     );
 };
 
 export const useAuth = () => {
-    return useContext(AuthContext);
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };

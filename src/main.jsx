@@ -1,16 +1,20 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom'; // Імпортуємо BrowserRouter тут
-import './index.css';
+// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\main.jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-import { AuthProvider } from './context/AuthContext'; // Імпортуємо AuthProvider
+import './index.css'; // Ваш файл стилів Tailwind CSS
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx'; // Імпортуємо AuthProvider
+import { ToastContainer } from 'react-toastify'; // Імпортуємо ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Імпортуємо CSS для react-toastify
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter> {/* Обертаємо все в BrowserRouter */}
-      <AuthProvider> {/* Обертаємо App в AuthProvider */}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider> {/* Обертаємо застосунок у AuthProvider */}
         <App />
+        <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="dark" /> {/* Додаємо ToastContainer */}
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>,
+  </React.StrictMode>,
 );
