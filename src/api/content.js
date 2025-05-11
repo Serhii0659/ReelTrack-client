@@ -5,6 +5,42 @@ import axios from 'axios';
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
+// Функція для отримання нових релізів
+export const getNewReleases = async (page = 1) => {
+    try {
+        const response = await axios.get(`${TMDB_BASE_URL}/movie/now_playing`, {
+            params: {
+                api_key: TMDB_API_KEY,
+                language: 'uk-UA', // Або мова, яку ви хочете використовувати
+                page: page // <--- ПЕРЕКОНАЙТЕСЯ, ЩО ЦЕ ЧИСЛО
+            }
+        });
+        // Повертаємо лише результати
+        return response.data.results;
+    } catch (error) {
+        console.error("Помилка отримання нових релізів:", error);
+        throw error;
+    }
+};
+
+// --- ДОДАНО: ФУНКЦІЯ ДЛЯ ОТРИМАННЯ ТРЕНДОВОГО КОНТЕНТУ ---
+export const getTrendingContent = async (type = 'all', time_window = 'day', page = 1) => {
+    try {
+        const response = await axios.get(`${TMDB_BASE_URL}/trending/${type}/${time_window}`, {
+            params: {
+                api_key: TMDB_API_KEY,
+                language: 'uk-UA',
+                page: page
+            }
+        });
+        // Повертаємо лише результати
+        return response.data.results;
+    } catch (error) {
+        console.error(`Помилка отримання трендового контенту (${type}/${time_window}):`, error);
+        throw error;
+    }
+};
+
 // Функція для пошуку фільмів та серіалів (використовує TMDB multi-search)
 export const searchContent = async (query) => {
     if (!query || query.length < 2) {

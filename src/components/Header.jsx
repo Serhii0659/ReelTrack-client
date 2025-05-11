@@ -71,7 +71,7 @@ function Header() {
                 className="w-full text-left px-4 py-2 text-white hover:bg-[#444]"
                 onClick={handleAccountClick}
               >
-                Мій акаунт
+                Профіль
               </button>
               <button
                 className="w-full text-left px-4 py-2 text-white hover:bg-[#444]"

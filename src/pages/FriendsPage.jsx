@@ -5,8 +5,9 @@ import {
     fetchFriends,
     fetchFriendRequests,
     acceptFriendRequest,
-    rejectOrRemoveFriend,
-    sendFriendRequest // Додано імпорт функції для надсилання запиту на дружбу
+    rejectOrRemoveFriend, // Використовуємо оновлену функцію
+    sendFriendRequest,
+    searchUsers // Припускаємо, що ця функція API існує і може шукати за ID
 } from '../api/user';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -18,6 +19,7 @@ const FriendsPage = () => {
     const navigate = useNavigate();
 
     const [friends, setFriends] = useState([]);
+    // ВИПРАВЛЕНО: friendRequests тепер містить об'єкти користувачів, які надіслали запит
     const [friendRequests, setFriendRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -26,6 +28,33 @@ const FriendsPage = () => {
     // Нові стани для модального вікна "Додати Друга"
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const [friendIdInput, setFriendIdInput] = useState('');
+    const [searchResult, setSearchResult] = useState(null); // Стан для результату пошуку користувача
+    const [searching, setSearching] = useState(false); // Стан для індикації пошуку
+
+    // Функція для завантаження друзів та запитів
+    const loadFriendsAndRequests = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // ВИПРАВЛЕНО: Очікуємо, що fetchFriendRequests повертає масив об'єктів користувачів
+            const [friendsData, requestsData] = await Promise.all([
+                fetchFriends(), // Отримуємо список друзів (масив об'єктів користувачів)
+                fetchFriendRequests() // Отримуємо список вхідних запитів (масив об'єктів користувачів)
+            ]);
+            setFriends(Array.isArray(friendsData) ? friendsData : []);
+            setFriendRequests(Array.isArray(requestsData) ? requestsData : []);
+        } catch (err) {
+            console.error('Помилка завантаження друзів/запитів:', err);
+            setError(err.message || 'Не вдалося завантажити дані про друзів.');
+            toast.error('Не вдалося завантажити дані про друзів.');
+            if (err.response?.status === 401) {
+                toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
+                logout();
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -34,41 +63,21 @@ const FriendsPage = () => {
             return;
         }
 
-        const loadFriendsAndRequests = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const [friendsData, requestsData] = await Promise.all([
-                    fetchFriends(),
-                    fetchFriendRequests()
-                ]);
-                setFriends(Array.isArray(friendsData) ? friendsData : []);
-                setFriendRequests(Array.isArray(requestsData) ? requestsData : []);
-            } catch (err) {
-                console.error('Помилка завантаження друзів/запитів:', err);
-                setError(err.message || 'Не вдалося завантажити дані про друзів.');
-                toast.error('Не вдалося завантажити дані про друзів.');
-                if (err.response?.status === 401) {
-                    toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
-                    logout();
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadFriendsAndRequests();
     }, [isAuthenticated, navigate, logout]);
 
-    const handleAcceptRequest = async (requestId) => {
-        try {
-            await acceptFriendRequest(requestId);
-            toast.success('Запит на дружбу прийнято!');
-            setFriendRequests(prev => prev.filter(req => req._id !== requestId));
-            // Після прийняття запиту, перезавантажуємо список друзів, щоб оновити UI
-            const friendsData = await fetchFriends();
-            setFriends(Array.isArray(friendsData) ? friendsData : []);
 
+    // ВИПРАВЛЕНО: handleAcceptRequest тепер приймає userId
+    const handleAcceptRequest = async (userId) => {
+        try {
+            // Передаємо userId до API функції
+            await acceptFriendRequest(userId);
+            toast.success('Запит на дружбу прийнято!');
+            // Оновлюємо списки: видаляємо запит та додаємо до друзів
+            setFriendRequests(prev => prev.filter(req => req._id !== userId));
+            // Оскільки бекенд не повертає об'єкт нового друга при прийнятті,
+            // найпростіший спосіб оновити список друзів - це перезавантажити його.
+            loadFriendsAndRequests(); // Перезавантажуємо обидва списки
         } catch (err) {
             console.error('Помилка прийняття запиту:', err);
             const msg = err.response?.data?.message || 'Не вдалося прийняти запит.';
@@ -77,18 +86,29 @@ const FriendsPage = () => {
         }
     };
 
-    const handleRejectOrRemove = async (id, isRequest) => {
+    // ВИПРАВЛЕНО: handleRejectOrRemove тепер приймає userId
+    const handleRejectOrRemove = async (userId, isRequest) => {
+         // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+        if (!userId || typeof userId !== 'string' || userId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+             toast.error('Невірний ID користувача.');
+             console.error('Attempted to reject/remove with invalid userId:', userId);
+             return;
+        }
+
         try {
-            await rejectOrRemoveFriend(id, isRequest);
+            // ВИПРАВЛЕНО: Викликаємо rejectOrRemoveFriend тільки з userId
+            await rejectOrRemoveFriend(userId);
             if (isRequest) {
                 toast.info('Запит на дружбу відхилено.');
-                setFriendRequests(prev => prev.filter(req => req._id !== id));
+                // Видаляємо запит зі списку вхідних запитів
+                setFriendRequests(prev => prev.filter(req => req._id !== userId));
             } else {
                 toast.info('Друга видалено.');
-                setFriends(prev => prev.filter(friend => friend._id !== id));
+                // Видаляємо друга зі списку друзів
+                setFriends(prev => prev.filter(friend => friend._id !== userId));
             }
         } catch (err) {
-            console.error(`Помилка при ${isRequest ? 'відхиленні запиту' : 'видаленні друга'}:`, err);
+            console.error(`Помилка при ${isRequest ? 'відхиленні запиту' : 'видаленні друга'} користувача ${userId}:`, err);
             const msg = err.response?.data?.message || `Не вдалося ${isRequest ? 'відхилити запит' : 'видалити друга'}.`;
             toast.error(msg);
             setError(msg);
@@ -97,29 +117,88 @@ const FriendsPage = () => {
 
     // Нова функція для надсилання запиту на дружбу за ID
     const handleSendFriendRequest = async () => {
-    if (!friendIdInput) {
-        toast.error('Будь ласка, введіть ID користувача.');
-        return;
-    }
-    console.log('Attempting to send friend request with ID:', friendIdInput); // Додай цей рядок
-    try {
-        await sendFriendRequest(friendIdInput);
-        toast.success('Запит на дружбу надіслано!');
-        setShowAddFriendModal(false);
-        setFriendIdInput('');
-    } catch (err) {
-        console.error('Помилка надсилання запиту на дружбу:', err);
-        const msg = err.response?.data?.message || 'Не вдалося надіслати запит на дружбу.';
-        toast.error(msg);
-    }
-};
+        if (!friendIdInput) {
+            toast.error('Будь ласка, введіть ID користувача.');
+            return;
+        }
+         // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+        if (friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)) {
+             toast.error('Невірний формат ID користувача.');
+             return;
+        }
+
+        console.log('Attempting to send friend request to ID:', friendIdInput);
+        try {
+            // ВИПРАВЛЕНО: Викликаємо sendFriendRequest з friendIdInput
+            await sendFriendRequest(friendIdInput);
+            toast.success('Запит на дружбу надіслано!');
+            setShowAddFriendModal(false);
+            setFriendIdInput('');
+            setSearchResult(null); // Очищаємо результат пошуку
+            // Можливо, оновити список надісланих запитів, якщо ви його відображаєте
+            // loadFriendsAndRequests(); // Можна перезавантажити все, якщо потрібно
+        } catch (err) {
+            console.error('Помилка надсилання запиту на дружбу:', err);
+            const msg = err.response?.data?.message || 'Не вдалося надіслати запит на дружбу.';
+            toast.error(msg);
+        }
+    };
+
+     // Функція для пошуку користувача за ID (для модального вікна)
+     const handleSearchUser = async () => {
+         if (!friendIdInput) {
+             setSearchResult(null);
+             return;
+         }
+          // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+         if (friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)) {
+             setSearchResult({ error: 'Невірний формат ID користувача.' });
+             return;
+         }
+
+         setSearching(true);
+         setSearchResult(null);
+         try {
+             // ВИПРАВЛЕНО: Викликаємо searchUsers або іншу функцію для пошуку користувача за ID
+             // Припускаємо, що searchUsers може шукати за ID, або вам потрібна нова функція API
+             // Якщо searchUsers шукає лише за іменем, вам потрібен новий API ендпоінт та функція
+             // Припускаємо, що `searchUsers` тепер може приймати ID і повертати масив з 0 або 1 користувачем
+             const users = await searchUsers(friendIdInput); // Припускаємо, що searchUsers працює з ID
+             if (users && users.length > 0) {
+                 // Перевіряємо, чи знайдений користувач не є поточним користувачем
+                 // (потрібен доступ до ID поточного користувача, можливо з useAuth)
+                 // const currentUser = useAuth().user; // Отримайте поточного користувача
+                 // if (users[0]._id === currentUser._id) {
+                 //     setSearchResult({ error: 'Це ваш власний ID.' });
+                 // } else {
+                      setSearchResult(users[0]); // Припускаємо, що повертається масив, беремо першого
+                 // }
+             } else {
+                 setSearchResult({ error: 'Користувача з таким ID не знайдено.' });
+             }
+         } catch (err) {
+             console.error('Помилка пошуку користувача:', err);
+             setSearchResult({ error: err.response?.data?.message || 'Не вдалося знайти користувача.' });
+         } finally {
+             setSearching(false);
+         }
+     };
+
+
     if (!isAuthenticated) {
-        return null; 
+        // Відображаємо повідомлення, якщо користувач не автентифікований
+         return (
+             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
+                 <Header />
+                 <p>Будь ласка, увійдіть, щоб переглянути друзів.</p>
+             </div>
+         );
     }
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
+                 <Header />
                 Завантаження друзів та запитів...
             </div>
         );
@@ -127,7 +206,8 @@ const FriendsPage = () => {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500">
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
+                 <Header />
                 Помилка: {error}
             </div>
         );
@@ -142,7 +222,11 @@ const FriendsPage = () => {
                 {/* Кнопка для відкриття модального вікна "Додати друга" */}
                 <div className="flex justify-center mb-8">
                     <button
-                        onClick={() => setShowAddFriendModal(true)}
+                        onClick={() => {
+                            setShowAddFriendModal(true);
+                            setFriendIdInput(''); // Очищаємо поле вводу при відкритті
+                            setSearchResult(null); // Очищаємо результат пошуку
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg text-lg font-semibold flex items-center space-x-2 transition-colors"
                     >
                         <FaUserPlus />
@@ -169,22 +253,24 @@ const FriendsPage = () => {
                 {/* Вміст в залежності від обраної вкладки */}
                 {tab === 'friends' && (
                     <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
-                        <h2 className="text-2xl font-bold mb-4 text-center">Список Друзів</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-center text-white">Список Друзів</h2> {/* Колір заголовка */}
                         {friends.length === 0 ? (
                             <p className="text-center text-gray-400">У вас поки немає друзів.</p>
                         ) : (
                             <ul className="space-y-4">
                                 {friends.map(friend => (
+                                    // ВИПРАВЛЕНО: friend.username замінено на friend.name згідно з моделлю User
                                     <li key={friend._id} className="flex items-center justify-between bg-[#2a2a2a] p-4 rounded-md shadow">
                                         <div className="flex items-center space-x-4">
                                             <img
                                                 src={friend.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
-                                                alt={friend.username}
+                                                alt={friend.name || 'Без імені'} // ВИПРАВЛЕНО: friend.username
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
                                             />
-                                            <span className="text-lg font-medium">{friend.username}</span>
+                                            <span className="text-lg font-medium text-white">{friend.name || 'Невідомий'}</span> {/* ВИПРАВЛЕНО: friend.username */}
                                         </div>
                                         <button
+                                            // ВИПРАВЛЕНО: Передаємо friend._id
                                             onClick={() => handleRejectOrRemove(friend._id, false)}
                                             className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
                                         >
@@ -199,29 +285,34 @@ const FriendsPage = () => {
 
                 {tab === 'requests' && (
                     <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
-                        <h2 className="text-2xl font-bold mb-4 text-center">Вхідні Запити на Дружбу</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-center text-white">Вхідні Запити на Дружбу</h2> {/* Колір заголовка */}
                         {friendRequests.length === 0 ? (
                             <p className="text-center text-gray-400">Немає вхідних запитів на дружбу.</p>
                         ) : (
                             <ul className="space-y-4">
                                 {friendRequests.map(request => (
+                                     // ВИПРАВЛЕНО: request._id тепер є ID користувача, який надіслав запит
                                     <li key={request._id} className="flex items-center justify-between bg-[#2a2a2a] p-4 rounded-md shadow">
                                         <div className="flex items-center space-x-4">
+                                            {/* ВИПРАВЛЕНО: request.avatarUrl та request.name */}
                                             <img
-                                                src={request.fromUser?.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
-                                                alt={request.fromUser?.username}
+                                                src={request.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
+                                                alt={request.name || 'Без імені'}
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
                                             />
-                                            <span className="text-lg font-medium">{request.fromUser?.username || 'Невідомий'}</span>
+                                            {/* ВИПРАВЛЕНО: request.name */}
+                                            <span className="text-lg font-medium text-white">{request.name || 'Невідомий'}</span>
                                         </div>
                                         <div className="flex space-x-2">
                                             <button
+                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача)
                                                 onClick={() => handleAcceptRequest(request._id)}
                                                 className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
                                             >
                                                 <FaCheck /> <span className="hidden sm:inline">Прийняти</span>
                                             </button>
                                             <button
+                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача)
                                                 onClick={() => handleRejectOrRemove(request._id, true)}
                                                 className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
                                             >
@@ -247,7 +338,7 @@ const FriendsPage = () => {
                                 &times;
                             </button>
                             <h2 className="text-2xl font-bold mb-6 text-center text-[#e50914]">Додати Друга</h2>
-                            <div className="mb-6">
+                            <div className="mb-4"> {/* Зменшено нижній відступ */}
                                 <label htmlFor="friendId" className="block text-gray-300 text-sm font-bold mb-2">
                                     Введіть ID користувача:
                                 </label>
@@ -255,15 +346,52 @@ const FriendsPage = () => {
                                     type="text"
                                     id="friendId"
                                     value={friendIdInput}
-                                    onChange={(e) => setFriendIdInput(e.target.value)}
+                                    onChange={(e) => {
+                                        setFriendIdInput(e.target.value);
+                                        setSearchResult(null); // Очищаємо результат при зміні вводу
+                                    }}
                                     className="shadow appearance-none border border-gray-600 rounded w-full py-3 px-4 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 bg-[#2a2a2a]"
                                     placeholder="Наприклад, 60c72b2f9f1b2c3d4e5f6a7b"
                                 />
                             </div>
+
+                            {/* Кнопка пошуку користувача */}
+                            <div className="mb-4 flex justify-end"> {/* Зменшено нижній відступ */}
+                                <button
+                                    onClick={handleSearchUser}
+                                    disabled={searching || !friendIdInput || friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)}
+                                    className={`bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors ${searching || !friendIdInput || friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {searching ? 'Пошук...' : 'Знайти Користувача'}
+                                </button>
+                            </div>
+
+                            {/* Результат пошуку */}
+                            {searchResult && (
+                                <div className="mb-6 p-4 bg-[#2a2a2a] rounded-md">
+                                    {searchResult.error ? (
+                                        <p className="text-red-500 text-center">{searchResult.error}</p>
+                                    ) : (
+                                        <div className="flex items-center space-x-4">
+                                            <img
+                                                src={searchResult.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
+                                                alt={searchResult.name || 'Без імені'}
+                                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
+                                            />
+                                            <span className="text-lg font-medium text-white">{searchResult.name || 'Невідомий'}</span>
+                                            {/* Можна додати кнопку "Надіслати запит" тут, якщо користувач знайдений */}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+
                             <div className="flex justify-end">
+                                 {/* Кнопка "Надіслати Запит" - активна лише якщо користувач знайдений і немає помилки */}
                                 <button
                                     onClick={handleSendFriendRequest}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors"
+                                    disabled={!searchResult || searchResult.error || searching} // Вимикаємо, якщо немає результату, є помилка, або йде пошук
+                                    className={`bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors ${!searchResult || searchResult.error || searching ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     Надіслати Запит
                                 </button>

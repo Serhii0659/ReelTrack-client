@@ -8,7 +8,14 @@ import ReviewFormModal from '../components/ReviewFormModal';
 import ReviewItem from '../components/ReviewItem';
 import { FaStar, FaBookmark, FaRegBookmark } from 'react-icons/fa';
 
-import { fetchContentDetails, fetchContentReviews, submitContentReview, toggleContentInUserLibrary, fetchUserLibrary } from '../api/user'; 
+// Переконайтеся, що імпорти з api/user.js правильні
+import {
+    fetchContentDetails,
+    fetchContentReviews,
+    submitContentReview,
+    toggleContentInUserLibrary,
+    fetchUserWatchlist // Переконайтеся, що використовується fetchUserWatchlist
+} from '../api/user';
 
 const ContentDetailsPage = () => {
     const { mediaType, tmdbId } = useParams();
@@ -30,29 +37,37 @@ const ContentDetailsPage = () => {
             setLoading(true);
             setError(null);
             try {
+                // Отримуємо деталі контенту з бекенду (або TMDB через бекенд)
                 const details = await fetchContentDetails(mediaType, tmdbId);
                 setContentDetails(details);
 
+                // Отримуємо відгуки для цього контенту
                 const fetchedReviews = await fetchContentReviews(mediaType, tmdbId);
                 setReviews(fetchedReviews);
 
+                // Якщо користувач автентифікований, перевіряємо його відгук та статус у бібліотеці
                 if (isAuthenticated && user) {
+                    // Знаходимо відгук поточного користувача серед отриманих відгуків
                     const currentUserReview = fetchedReviews.find(
-                        (review) => review.reviewer && review.reviewer._id === user.id
+                        // Порівнюємо ID рецензента з ID поточного користувача
+                        (review) => review.reviewer && review.reviewer._id === user._id // ВИПРАВЛЕНО: використовуємо user._id
                     );
                     setUserReview(currentUserReview || null);
 
-                    const userLibrary = await fetchUserLibrary(); 
-                    
-                    // ВИПРАВЛЕНО: Звертаємося до userLibrary.items
-                    if (userLibrary && Array.isArray(userLibrary.items)) { // Перевіряємо, чи userLibrary існує і userLibrary.items є масивом
-                        const currentTmdbId = String(tmdbId); 
-                        const isInLibrary = userLibrary.items.some( // <--- ЗМІНЕНО ТУТ: userLibrary.items.some
-                            (item) => String(item.tmdbId) === currentTmdbId && item.mediaType === mediaType
+                    // Отримуємо список перегляду користувача
+                    const userLibrary = await fetchUserWatchlist();
+
+                    // ВИПРАВЛЕНО: Звертаємося до userLibrary.items та перевіряємо його
+                    if (userLibrary && Array.isArray(userLibrary.items)) {
+                        const currentTmdbId = String(tmdbId);
+                        // Перевіряємо, чи є контент у списку перегляду користувача
+                        const isInLibrary = userLibrary.items.some(
+                            // Порівнюємо externalId (який є tmdbId) та mediaType
+                            (item) => String(item.externalId) === currentTmdbId && item.mediaType === mediaType // ВИПРАВЛЕНО: порівнюємо externalId
                         );
                         setIsAddedToLibrary(isInLibrary);
                     } else {
-                        // Оновив повідомлення для більшої ясності
+                        // Логуємо попередження, якщо відповідь не є масивом елементів
                         console.warn("Отримано непередбачувану відповідь для бібліотеки користувача:", userLibrary);
                         setIsAddedToLibrary(false); // Вважаємо, що контенту немає в бібліотеці, якщо відповідь не є масивом
                     }
@@ -67,74 +82,117 @@ const ContentDetailsPage = () => {
             }
         };
 
+        // Викликаємо функцію при зміні mediaType, tmdbId, стану автентифікації або користувача
         loadContentDetailsAndReviews();
-    }, [mediaType, tmdbId, isAuthenticated, user]); 
+    }, [mediaType, tmdbId, isAuthenticated, user]); // Додано user до залежностей
 
+    // Обробник кліку на кнопку "Оцінити"
     const handleRateClick = () => {
         if (!isAuthenticated) {
             toast.info('Будь ласка, увійдіть, щоб залишити відгук.');
             return;
         }
-        setShowReviewModal(true);
+        setShowReviewModal(true); // Відкриваємо модальне вікно відгуку
     };
 
+    // Обробник надсилання відгуку з модального вікна
     const handleReviewSubmit = async (reviewData) => {
+        // --- ДОДАНО: Лог для перевірки даних, отриманих з модального вікна ---
+        console.log('ContentDetailsPage (handleReviewSubmit): Дані отримані з модального вікна:', reviewData);
+        // --- ---
         try {
-            const result = await submitContentReview({
-                ...reviewData,
+            // --- ВИПРАВЛЕНО: Додаємо contentTitle та contentPosterPath ---
+            const reviewPayload = {
+                ...reviewData, // Включає rating та comment з модального вікна
                 mediaType,
-                tmdbId,
-                reviewId: userReview ? userReview._id : null,
-            });
+                tmdbId: String(tmdbId), // Переконайтеся, що tmdbId є рядком, якщо так очікує бекенд
+                reviewId: userReview ? userReview._id : null, // ID існуючого відгуку для оновлення
+                contentTitle: contentDetails.title || contentDetails.name, // Додаємо назву контенту
+                contentPosterPath: contentDetails.poster_path // Додаємо шлях до постера
+            };
+            // --- ---
+
+            // --- ДОДАНО: Лог для перевірки об'єкта, що надсилається ---
+            console.log('ContentDetailsPage (handleReviewSubmit): Об\'єкт для submitContentReview:', reviewPayload);
+            // --- ---
+
+            // Викликаємо функцію API для надсилання/оновлення відгуку
+            const result = await submitContentReview(reviewPayload);
+
             toast.success(result.message || 'Відгук успішно збережено!');
-            setShowReviewModal(false);
-            
-            setUserReview(result.review); 
-            
+            setShowReviewModal(false); // Закриваємо модальне вікно
+
+            // Оновлюємо стан відгуку користувача та загальний список відгуків
+            // Припускаємо, що бекенд повертає оновлений відгук у result.review
+            setUserReview(result.review);
+
+            // Оновлюємо весь список відгуків, щоб побачити зміни
             const updatedReviews = await fetchContentReviews(mediaType, tmdbId);
             setReviews(updatedReviews);
 
         } catch (err) {
             console.error('Помилка при збереженні відгуку:', err);
+            // Відображаємо повідомлення про помилку з бекенду, якщо доступно
             toast.error(err.response?.data?.message || 'Не вдалося зберегти відгук.');
         }
     };
 
+     // Обробник перемикання статусу в бібліотеці
     const handleToggleLibrary = async () => {
         if (!isAuthenticated) {
             toast.info('Будь ласка, увійдіть, щоб додати контент до бібліотеки.');
             return;
         }
-        setIsTogglingLibrary(true);
+        setIsTogglingLibrary(true); // Встановлюємо стан завантаження для кнопки
         try {
+            // Формуємо об'єкт даних контенту для надсилання на бекенд
             const contentData = {
                 mediaType,
-                tmdbId: String(tmdbId),
-                title: contentDetails.title || contentDetails.name,
-                poster_path: contentDetails.poster_path,
-                release_date: contentDetails.release_date || contentDetails.first_air_date,
-                overview: contentDetails.overview,
-                genres: contentDetails.genres,
-                backdrop_path: contentDetails.backdrop_path
+                tmdbId: String(tmdbId), // Переконайтеся, що tmdbId є рядком
+                title: contentDetails.title || contentDetails.name, // Назва
+                poster_path: contentDetails.poster_path, // Шлях до постера
+                release_date: contentDetails.release_date || contentDetails.first_air_date, // Дата релізу
+                overview: contentDetails.overview, // Опис
+                genres: contentDetails.genres, // Жанри
+                backdrop_path: contentDetails.backdrop_path, // Шлях до фонового зображення
+                // Можливо, додайте інші поля, які ваш бекенд очікує для WatchlistItem
             };
-            
-            console.log("Відправляємо до бекенду для toggle:", { mediaType, tmdbId, contentData });
+
+            console.log("ContentDetailsPage: Відправляємо до бекенду для toggle:", contentData);
+
+            // Викликаємо функцію API для перемикання статусу в бібліотеці
             const response = await toggleContentInUserLibrary(contentData);
 
-            setIsAddedToLibrary(response.added); 
+            // Оновлюємо стан isAddedToLibrary на основі відповіді бекенду
+            setIsAddedToLibrary(response.added);
+            // Відображаємо повідомлення про успіх
             toast.success(response.message);
+
         } catch (err) {
             console.error('Помилка при оновленні бібліотеки:', err);
+            // Обробка помилок, включаючи помилку авторизації
             if (err.message === 'Користувач не авторизований. Будь ласка, увійдіть.') {
-                toast.error(err.message);
+                 toast.error(err.message);
             } else {
-                toast.error(err.response?.data?.message || 'Не вдалося оновити бібліотеку.');
+                 toast.error(err.response?.data?.message || 'Не вдалося оновити бібліотеку.');
             }
         } finally {
-            setIsTogglingLibrary(false);
+            setIsTogglingLibrary(false); // Завершуємо стан завантаження
         }
     };
 
+
+    // Допоміжна функція для формування URL постера
+    const getPosterUrl = (path, size = 'w500') => {
+        return path ? `https://image.tmdb.org/t/p/${size}${path}` : 'https://via.placeholder.com/500x750?text=No+Poster';
+    };
+
+    // Визначаємо назву та рік релізу для відображення
+    const displayTitle = contentDetails?.title || contentDetails?.name;
+    const displayReleaseDate = contentDetails?.release_date || contentDetails?.first_air_date;
+    const releaseYear = displayReleaseDate ? new Date(displayReleaseDate).getFullYear() : 'Невідомий';
+
+    // Умовне відображення: завантаження, помилка, контент не знайдено
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">
@@ -159,18 +217,12 @@ const ContentDetailsPage = () => {
         );
     }
 
-    const getPosterUrl = (path, size = 'w500') => { 
-        return path ? `https://image.tmdb.org/t/p/${size}${path}` : 'https://via.placeholder.com/500x750?text=No+Poster';
-    };
-
-    const displayTitle = contentDetails.title || contentDetails.name;
-    const displayReleaseDate = contentDetails.release_date || contentDetails.first_air_date;
-    const releaseYear = displayReleaseDate ? new Date(displayReleaseDate).getFullYear() : 'Невідомий';
-
+    // Основний рендер компонента
     return (
         <div className="bg-[#171717] min-h-screen text-white pt-24">
             <Header />
             <div className="container mx-auto p-6">
+                {/* Секція деталей контенту */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-12 bg-[#1e1e1e] rounded-lg shadow-lg p-6">
                     <img
                         src={getPosterUrl(contentDetails.poster_path || contentDetails.backdrop_path)}
@@ -194,6 +246,7 @@ const ContentDetailsPage = () => {
                             ))}
                         </div>
 
+                        {/* Кнопки дії (Оцінити, Додати до бібліотеки) */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mt-4">
                             {isAuthenticated && (
                                 <button
@@ -207,8 +260,8 @@ const ContentDetailsPage = () => {
                             {isAuthenticated && (
                                 <button
                                     onClick={handleToggleLibrary}
-                                    className={`font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 
-                                                ${isAddedToLibrary ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} 
+                                    className={`font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2
+                                                ${isAddedToLibrary ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                                                 ${isTogglingLibrary ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     disabled={isTogglingLibrary}
                                 >
@@ -232,11 +285,13 @@ const ContentDetailsPage = () => {
                     </div>
                 </div>
 
+                {/* Секція відгуків */}
                 <div className="mt-12">
                     <h2 className="text-3xl font-bold text-[#e50914] mb-6 text-center">Відгуки користувачів</h2>
                     {reviews.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {reviews.map(review => (
+                                // Передаємо review._id як key
                                 <ReviewItem key={review._id} review={review} />
                             ))}
                         </div>
@@ -248,9 +303,15 @@ const ContentDetailsPage = () => {
                 </div>
             </div>
 
+            {/* Модальне вікно для форми відгуку */}
             {showReviewModal && contentDetails && (
                 <ReviewFormModal
-                    item={contentDetails}
+                    // Передаємо необхідні дані контенту в модальне вікно
+                    item={{
+                        ...contentDetails,
+                        media_type: mediaType, // Додаємо media_type
+                        id: tmdbId // Додаємо tmdbId як id
+                    }}
                     onClose={() => setShowReviewModal(false)}
                     onReviewSubmit={handleReviewSubmit}
                     existingReview={userReview}
