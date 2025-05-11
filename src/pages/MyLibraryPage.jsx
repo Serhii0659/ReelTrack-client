@@ -7,16 +7,58 @@ import { useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import SeriesCard from '../components/SeriesCard';
 import SearchBar from '../components/SearchBar';
+import ReviewItem from '../components/ReviewItem'; // Компонент ReviewItem імпортовано
 
 import { fetchUserLibrary, removeContentFromUserLibrary } from '../api/user'; 
+
+// ПРИКЛАД: Вам потрібно буде реалізувати реальну функцію fetchUserReviews у вашому API-файлі.
+// Наприклад, у client/src/api/user.js або client/src/api/reviews.js
+const fetchUserReviews = async () => {
+    // У реальному застосунку це був би API-виклик до вашого бекенду, наприклад:
+    // const response = await api.get('/api/reviews/user'); // Припустимо, у вас є такий маршрут для відгуків користувача
+    // return response.data.reviews;
+
+    // Приклад тестових даних для демонстрації (видаліть або замініть на реальні дані):
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve([
+                {
+                    _id: 'rev1',
+                    reviewer: { username: 'Кіноманія' }, // Припускаємо, що reviewer має поле username
+                    rating: 8, // Рейтинг на 1-10
+                    comment: 'Це був чудовий фільм, мені дуже сподобався сюжет та акторська гра!',
+                    createdAt: '2024-01-15T10:00:00Z',
+                },
+                {
+                    _id: 'rev2',
+                    reviewer: { username: 'Серіаломан' },
+                    rating: 4,
+                    comment: 'На жаль, цей серіал не виправдав моїх очікувань. Досить нудно.',
+                    createdAt: '2024-02-20T14:30:00Z',
+                },
+                {
+                    _id: 'rev3',
+                    reviewer: { username: 'Любитель Кіно' },
+                    rating: 10,
+                    comment: 'Абсолютний шедевр! Рекомендую всім.',
+                    createdAt: '2024-03-05T09:00:00Z',
+                },
+            ]);
+        }, 500); // Імітація затримки мережі
+    });
+};
+
 
 const MyLibraryPage = () => {
     const { isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
 
     const [libraryContent, setLibraryContent] = useState([]);
+    const [userReviews, setUserReviews] = useState([]); // Новий стан для відгуків користувача
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [reviewsLoading, setReviewsLoading] = useState(true); // Новий стан завантаження для відгуків
+    const [reviewsError, setReviewsError] = useState(null);     // Новий стан помилки для відгуків
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -44,7 +86,23 @@ const MyLibraryPage = () => {
             }
         };
 
+        const loadUserReviews = async () => { // Нова функція для завантаження відгуків
+            setReviewsLoading(true);
+            setReviewsError(null);
+            try {
+                const reviewsData = await fetchUserReviews(); // Виклик вашого API для відгуків
+                setUserReviews(reviewsData);
+            } catch (err) {
+                console.error('Помилка завантаження відгуків:', err);
+                setReviewsError(err.message || 'Не вдалося завантажити ваші відгуки.');
+                toast.error('Не вдалося завантажити ваші відгуки.');
+            } finally {
+                setReviewsLoading(false);
+            }
+        };
+
         loadUserLibrary();
+        loadUserReviews(); // Викликаємо функцію для завантаження відгуків
     }, [isAuthenticated, navigate, logout]);
 
     const handleRemoveContent = async (contentId, title) => {
@@ -68,18 +126,18 @@ const MyLibraryPage = () => {
         return null; 
     }
 
-    if (loading) {
+    if (loading || reviewsLoading) { // Перевіряємо обидва стани завантаження
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400">
-                Завантаження бібліотеки...
+                Завантаження даних... {/* Змінено текст на більш загальний */}
             </div>
         );
     }
 
-    if (error) {
+    if (error || reviewsError) { // Перевіряємо обидва стани помилок
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500">
-                Помилка: {error}
+                Помилка: {error || reviewsError} {/* Відображає першу наявну помилку */}
             </div>
         );
     }
@@ -99,10 +157,11 @@ const MyLibraryPage = () => {
                     <SearchBar />
                 </div>
 
-                {libraryContent.length === 0 ? (
+                {/* Умовний рендеринг, якщо немає ані контенту, ані відгуків */}
+                {libraryContent.length === 0 && userReviews.length === 0 ? (
                     <div className="text-center text-gray-400 text-lg">
-                        <p className="mb-4">У вашій бібліотеці поки що немає контенту.</p>
-                        <p>Додайте фільми або серіали, щоб відстежувати їх!</p>
+                        <p className="mb-4">У вашій бібліотеці поки що немає контенту та відгуків.</p>
+                        <p>Додайте фільми або серіали та залиште відгуки!</p>
                     </div>
                 ) : (
                     <>
@@ -139,6 +198,27 @@ const MyLibraryPage = () => {
                             ) : (
                                 <div className="text-center text-gray-400 text-lg">
                                     <p>У вашій бібліотеці поки що немає серіалів.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Горизонтальний розділювач перед відгуками, якщо є інший контент або відгуки */}
+                        {(userReviews.length > 0 || (moviesInLibrary.length > 0 || seriesInLibrary.length > 0)) && (
+                            <hr className="my-10 border-gray-500" />
+                        )}
+                        
+                        {/* Нова Секція для відгуків користувача */}
+                        <div className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 text-white text-center">Ваші Відгуки</h2>
+                            {userReviews.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {userReviews.map(review => (
+                                        <ReviewItem key={review._id} review={review} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 text-lg">
+                                    <p>У вас поки що немає відгуків.</p>
                                 </div>
                             )}
                         </div>

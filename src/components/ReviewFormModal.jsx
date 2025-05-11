@@ -1,13 +1,12 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\ReviewFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { FaStar } from 'react-icons/fa';
+import PropTypes from 'prop-types';
 
 const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
     const [rating, setRating] = useState(existingReview ? existingReview.rating : 0);
     const [comment, setComment] = useState(existingReview ? existingReview.comment : '');
     const [hover, setHover] = useState(0);
 
-    // Встановлюємо початкові значення при зміні existingReview (для редагування)
     useEffect(() => {
         if (existingReview) {
             setRating(existingReview.rating);
@@ -27,10 +26,24 @@ const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
         onReviewSubmit({
             rating,
             comment,
-            mediaType: item.media_type || item.mediaType, // Використовуємо media_type з TMDB або mediaType з твоїх даних
-            tmdbId: item.id || item.tmdbId,               // Використовуємо id з TMDB або tmdbId з твоїх даних
-            reviewId: existingReview ? existingReview._id : null // Для оновлення
+            mediaType: item.media_type || item.mediaType,
+            tmdbId: item.id || item.tmdbId,
+            reviewId: existingReview ? existingReview._id : null
         });
+    };
+
+    // Функція для відображення зірочок (як в ReviewItem)
+    const renderStars = (ratingValue) => {
+        return (
+            <div className="flex text-yellow-400">
+                {[...Array(5)].map((_, i) => (
+                    <FaStar 
+                        key={i}
+                        className={i < Math.floor(ratingValue / 2) ? 'text-yellow-400' : 'text-gray-500'}
+                    />
+                ))}
+            </div>
+        );
     };
 
     return (
@@ -48,6 +61,15 @@ const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
                         <label htmlFor="rating" className="block text-gray-300 text-sm font-bold mb-2">
                             Ваша оцінка:
                         </label>
+                        
+                        {/* Прев'ю оцінки (як в ReviewItem) */}
+                        <div className="flex items-center mb-3">
+                            {renderStars(rating)}
+                            <span className="text-gray-300 font-semibold ml-2">
+                                {rating}/10
+                            </span>
+                        </div>
+                        
                         <div className="flex justify-center space-x-1 text-yellow-400 text-3xl">
                             {[...Array(10)].map((star, index) => {
                                 const currentRating = index + 1;
@@ -71,9 +93,6 @@ const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
                                 );
                             })}
                         </div>
-                        <p className="text-center text-gray-400 mt-2">
-                            Вибрано: <span className="font-semibold">{rating}/10</span>
-                        </p>
                     </div>
 
                     <div className="mb-6">
@@ -109,6 +128,24 @@ const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
             </div>
         </div>
     );
+};
+
+ReviewFormModal.propTypes = {
+    item: PropTypes.shape({
+        media_type: PropTypes.string,
+        mediaType: PropTypes.string,
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        tmdbId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        title: PropTypes.string,
+        name: PropTypes.string,
+    }).isRequired,
+    onClose: PropTypes.func.isRequired,
+    onReviewSubmit: PropTypes.func.isRequired,
+    existingReview: PropTypes.shape({
+        _id: PropTypes.string,
+        rating: PropTypes.number,
+        comment: PropTypes.string,
+    }),
 };
 
 export default ReviewFormModal;
