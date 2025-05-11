@@ -50,9 +50,10 @@ const NewReleases = () => {
             <div className="flex gap-4 overflow-x-auto pb-2">
                 {newReleases.length > 0 ? (
                     newReleases.map((content) => (
-                        <Link 
-                            to={`/${content.mediaType}/${content.id}`} 
-                            key={content.id} 
+                        <Link
+                            // ОНОВЛЕНО ТУТ: використовуємо content.media_type і додаємо запасне значення 'movie'
+                            to={`/content/${content.media_type || 'movie'}/${content.id}`}
+                            key={content.id}
                             className="flex-shrink-0"
                         >
                             <div className="w-[100px] h-[175px] bg-gray-800 rounded-lg overflow-hidden shadow-lg">
@@ -82,4 +83,3 @@ const NewReleases = () => {
 };
 
 export default NewReleases;
-

@@ -14,7 +14,11 @@ const NowWatching = () => {
                 setLoading(true);
                 setError(null);
                 const results = await getTrendingContent('all', 'day', 1);
-                setTrendingContent(results);
+                // ОНОВЛЕНО ТУТ: Фільтруємо, щоб залишити лише "movie" або "tv"
+                const filteredResults = results.filter(
+                    item => item.media_type === 'movie' || item.media_type === 'tv'
+                );
+                setTrendingContent(filteredResults);
             } catch (err) {
                 console.error("Помилка при отриманні трендового контенту:", err);
                 setError('Не вдалося завантажити популярний контент. Спробуйте пізніше.');
@@ -49,9 +53,9 @@ const NowWatching = () => {
             <div className="flex gap-4 overflow-x-auto pb-2">
                 {trendingContent.length > 0 ? (
                     trendingContent.map((content) => (
-                        <Link 
-                            to={`/${content.media_type}/${content.id}`} 
-                            key={content.id} 
+                        <Link
+                            to={`/content/${content.media_type}/${content.id}`}
+                            key={content.id}
                             className="flex-shrink-0"
                         >
                             <div className="w-24 h-40 bg-gray-800 rounded-lg overflow-hidden shadow-lg">

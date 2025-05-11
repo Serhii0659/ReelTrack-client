@@ -1,9 +1,10 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\context\AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Імпортуємо useNavigate для перенаправлення
 
-const AuthContext = createContext(null);
+// 1. Створюємо контекст і експортуємо його як іменований експорт.
+// Це виправляє помилку "doesn't provide an export named: 'AuthContext'".
+export const AuthContext = createContext(null);
 
 // Базовий URL вашого серверного API (повинен бути в .env)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -73,12 +74,12 @@ export const AuthProvider = ({ children }) => {
                         // Токени оновлено, тепер користувач автентифікований
                         setIsAuthenticated(true);
                         // Отримуємо дані користувача з оновленим токеном
-                         const userResponseAfterRefresh = await axios.get(`${API_BASE_URL}/api/users/profile`, {
+                        const userResponseAfterRefresh = await axios.get(`${API_BASE_URL}/api/users/profile`, {
                             headers: {
                                 Authorization: `Bearer ${refreshResponse.data.accessToken}`
                             }
-                         });
-                         setUser(userResponseAfterRefresh.data);
+                        });
+                        setUser(userResponseAfterRefresh.data);
                         console.log('AuthContext: Токен успішно оновлено. Користувач автентифікований.');
 
                     } catch (refreshError) {
@@ -90,7 +91,7 @@ export const AuthProvider = ({ children }) => {
                 } else {
                     // Інша помилка або немає refresh token
                     logout(); // Вийти з системи
-                     console.log('AuthContext: Помилка авторизації або відсутній refresh token. Користувач вийшов.');
+                    console.log('AuthContext: Помилка авторизації або відсутній refresh token. Користувач вийшов.');
                 }
             } finally {
                 setLoading(false); // Завершуємо завантаження
@@ -103,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
-            // --- ПЕРЕКОНАЙТЕСЯ, ЩО БЕКЕНД ПОВЕРТАЄ accessTokeN ТА refreshTokeN ---
+            // --- ПЕРЕКОНАЙТЕСЯ, ЩО БЕКЕНД ПОВЕРТАЄ accessToken ТА refreshToken ---
             const { accessToken, refreshToken, user: userData } = response.data;
 
             console.log('AuthContext Login: Received accessToken:', accessToken);
@@ -141,7 +142,7 @@ export const AuthProvider = ({ children }) => {
             // localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
             // setIsAuthenticated(true);
             // setUser(userData);
-             console.log('AuthContext Register: Реєстрація успішна.', response.data);
+            console.log('AuthContext Register: Реєстрація успішна.', response.data);
             return response.data; // Зазвичай при реєстрації не відбувається автоматичний вхід
         } catch (error) {
             console.error('AuthContext Register: Помилка реєстрації:', error.response?.data?.message || error.message);
@@ -151,22 +152,22 @@ export const AuthProvider = ({ children }) => {
 
     // Функція для виходу користувача
     const logout = async () => {
-         try {
+        try {
             const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-             // Надсилаємо запит на бекенд для деактивації refresh token (якщо є)
-             if (refreshToken) {
+            // Надсилаємо запит на бекенд для деактивації refresh token (якщо є)
+            if (refreshToken) {
                 await axios.post(`${API_BASE_URL}/api/auth/logout`, { refreshToken });
                 console.log('AuthContext Logout: Запит на logout надіслано на бекенд.');
-             }
-         } catch (error) {
-             console.error('AuthContext Logout: Помилка при надсиланні logout на бекенд:', error.response?.data || error.message);
-             // Продовжуємо локальний вихід навіть якщо запит до бекенду не вдався
-         } finally {
+            }
+        } catch (error) {
+            console.error('AuthContext Logout: Помилка при надсиланні logout на бекенд:', error.response?.data || error.message);
+            // Продовжуємо локальний вихід навіть якщо запит до бекенду не вдався
+        } finally {
             // --- ВИДАЛЯЄМО ОБИДВА ТОКЕНИ ---
             localStorage.removeItem(AUTH_TOKEN_KEY);
             localStorage.removeItem(REFRESH_TOKEN_KEY);
             // Можливо, також видаліть дані користувача, якщо зберігали окремо
-            localStorage.removeItem('authUser');
+            localStorage.removeItem('authUser'); // Видаляємо, якщо ви зберігаєте тут об'єкт користувача
             // --- ---
 
             setIsAuthenticated(false);
@@ -174,7 +175,7 @@ export const AuthProvider = ({ children }) => {
             console.log('AuthContext Logout: Локальний вихід успішний. Токени видалено.');
             // Перенаправлення на сторінку входу
             navigate('/login');
-         }
+        }
     };
 
     // Значення, які надаються контекстом
@@ -185,6 +186,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register, // Якщо ви використовуєте реєстрацію через AuthContext
         logout,
+        setUser, // Додаємо setUser для можливості оновлення інформації про користувача (наприклад, після оновлення профілю)
     };
 
     // Показуємо спінер завантаження, поки йде перевірка автентифікації
@@ -200,6 +202,7 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
+// 2. Створюємо кастомний хук для зручного використання контексту
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === null) { // Перевіряємо на null, оскільки початкове значення createContext(null)

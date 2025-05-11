@@ -1,16 +1,19 @@
 // C:\Users\kreps\Documents\Projects\ReelTrack\client\src\pages\MyLibraryPage.jsx
-import React, { useEffect, useState, useMemo } from 'react'; // Додано useMemo
+import React, { useEffect, useState, useMemo } from 'react';
 // Імпортуємо потрібні функції API
 import { fetchUserWatchlist, deleteWatchlistItem, updateWatchlistItem, getUserReviews } from '../api/user';
 import Header from '../components/Header';
 import Spinner from '../components/Spinner'; // Припускаємо, що у вас є компонент Spinner
-// --- ДОДАНО: Імпорт компонента SearchBar (припускаємо, що він керований) ---
-import SearchBar from '../components/SearchBar';
+import SearchBar from '../components/SearchBar'; // Імпорт компонента SearchBar
+// --- ДОДАНО: Імпорт MovieCard та SeriesCard ---
+import MovieCard from '../components/MovieCard';
+import SeriesCard from '../components/SeriesCard';
+// --- ВИДАЛЕНО: Імпорт ReviewCard (ReviewGroup залишаємо) ---
+import { ReviewGroup } from '../components/ReviewCard'; // Імпортуємо тільки ReviewGroup
 // --- ---
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import ReviewCard, { ReviewGroup } from '../components/ReviewCard'; // Імпортуємо ReviewCard та ReviewGroup
 
 const MyLibraryPage = () => {
     const { isAuthenticated, loading: authLoading } = useAuth();
@@ -29,9 +32,8 @@ const MyLibraryPage = () => {
     // Стан для перемикання між вкладками
     const [activeTab, setActiveTab] = useState('watchlist'); // 'watchlist' або 'reviews'
 
-    // --- СТАН ДЛЯ ПОШУКУ (керований) ---
+    // СТАН ДЛЯ ПОШУКУ (керований)
     const [searchTerm, setSearchTerm] = useState('');
-    // --- ---
 
     // Функція для завантаження списку перегляду користувача
     const loadUserWatchlist = async () => {
@@ -47,8 +49,6 @@ const MyLibraryPage = () => {
         setErrorWatchlist(null);
         console.log('MyLibraryPage: Завантаження списку перегляду користувача...');
         try {
-            // ВИПРАВЛЕНО: Викликаємо fetchUserWatchlist
-            // Наразі отримуємо весь список, фільтрація буде на фронтенді
             const data = await fetchUserWatchlist();
             console.log('MyLibraryPage: Отримано список перегляду:', data);
             // Припускаємо, що fetchUserWatchlist повертає об'єкт з полем 'items'
@@ -117,26 +117,26 @@ const MyLibraryPage = () => {
 
     }, [isAuthenticated, authLoading, navigate]); // Залежності: перезавантажуємо при зміні стану автентифікації
 
-    // --- ВИКОРИСТАННЯ useMemo ДЛЯ ФІЛЬТРАЦІЇ ---
-    // Фільтруємо список перегляду на основі searchTerm
-    const filteredWatchlistItems = useMemo(() => {
-        if (!searchTerm) {
-            return watchlistItems; // Якщо пошуковий запит порожній, повертаємо весь список
-        }
+    // ВИКОРИСТАННЯ useMemo ДЛЯ ФІЛЬТРАЦІЇ та РОЗДІЛЕННЯ
+    const { filteredMovies, filteredTvShows } = useMemo(() => {
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
-        return watchlistItems.filter(item =>
+
+        const filteredItems = watchlistItems.filter(item =>
             item.title.toLowerCase().includes(lowerCaseSearchTerm) ||
             item.genres?.some(genre => genre.toLowerCase().includes(lowerCaseSearchTerm)) ||
-             item.userNotes?.toLowerCase().includes(lowerCaseSearchTerm) // Можливо, шукати по нотатках
-            // Додайте інші поля, за якими хочете шукати
+             item.userNotes?.toLowerCase().includes(lowerCaseSearchTerm)
         );
+
+        // Розділяємо відфільтровані елементи на фільми та серіали
+        const movies = filteredItems.filter(item => item.mediaType === 'movie');
+        const tvShows = filteredItems.filter(item => item.mediaType === 'tv');
+
+        return { filteredMovies: movies, filteredTvShows: tvShows };
     }, [watchlistItems, searchTerm]); // Перераховуємо лише при зміні списку або запиту
-    // --- ---
 
 
     // Обробник видалення елемента зі списку перегляду
     const handleDeleteItem = async (itemId) => {
-        // Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
         if (!itemId || typeof itemId !== 'string' || itemId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(itemId)) {
              toast.error('Невірний ID елемента.');
              console.error('Attempted to delete with invalid itemId:', itemId);
@@ -144,7 +144,6 @@ const MyLibraryPage = () => {
         }
 
         try {
-            // ВИПРАВЛЕНО: Викликаємо deleteWatchlistItem
             await deleteWatchlistItem(itemId);
             toast.success('Елемент видалено зі списку перегляду.');
             // Оновлюємо список, видаляючи елемент з локального стану
@@ -160,9 +159,7 @@ const MyLibraryPage = () => {
     };
 
     // Обробник оновлення елемента (наприклад, зміна статусу або оцінки)
-    // Ця функція буде викликатися з компонента WatchlistItemCard або подібного
     const handleUpdateItem = async (itemId, updateData) => {
-         // Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
         if (!itemId || typeof itemId !== 'string' || itemId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(itemId)) {
              toast.error('Невірний ID елемента.');
              console.error('Attempted to update with invalid itemId:', itemId);
@@ -170,7 +167,6 @@ const MyLibraryPage = () => {
         }
         console.log(`MyLibraryPage: Оновлення елемента ${itemId} з даними:`, updateData);
         try {
-            // ВИПРАВЛЕНО: Викликаємо updateWatchlistItem
             const updatedItem = await updateWatchlistItem(itemId, updateData);
             toast.success('Елемент оновлено.');
             // Оновлюємо елемент у локальному стані
@@ -189,12 +185,7 @@ const MyLibraryPage = () => {
         }
     };
 
-
-    // Функція для примусового оновлення даних (наприклад, по кнопці)
-    const handleRefreshClick = () => {
-        loadUserWatchlist();
-        loadUserReviews();
-    };
+    // Кнопка оновлення видалена з цього коду
 
 
     // Показуємо спінер, якщо автентифікація ще не завершена
@@ -204,7 +195,6 @@ const MyLibraryPage = () => {
 
     // Якщо користувач не автентифікований після завантаження
     if (!isAuthenticated) {
-        // navigate('/login'); // Перенаправлення вже відбувається в useEffect
         return (
              <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
                  <Header />
@@ -240,16 +230,6 @@ const MyLibraryPage = () => {
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Моя Бібліотека</h1>
 
-                {/* Кнопка оновлення */}
-                <div className="flex justify-center mb-6">
-                    <button
-                        onClick={handleRefreshClick}
-                        className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors"
-                    >
-                        Оновити
-                    </button>
-                </div>
-
                 {/* Вкладки */}
                 <div className="flex justify-center mb-8">
                     <button
@@ -271,50 +251,64 @@ const MyLibraryPage = () => {
                     <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg max-w-4xl mx-auto">
                         <h2 className="text-2xl font-bold mb-4 text-center text-white">Список Перегляду</h2>
 
-                        {/* --- ВИКОРИСТОВУЄМО КОМПОНЕНТ ПОШУКУ --- */}
+                        {/* ВИКОРИСТОВУЄМО КОМПОНЕНТ ПОШУКУ */}
                         <div className="mb-6">
                             <SearchBar
-                                searchTerm={searchTerm} // Передаємо стан пошукового запиту
-                                onSearchChange={setSearchTerm} // Передаємо функцію для його оновлення
+                                searchTerm={searchTerm}
+                                onSearchChange={setSearchTerm} // Передаємо функцію для оновлення стану
                                 placeholder="Пошук за назвою, жанром або нотатками..."
                             />
                         </div>
-                        {/* --- --- */}
 
-
-                        {/* ВИПРАВЛЕНО: Корекція синтаксису умовного рендерингу */}
+                        {/* Відображення завантаження або помилки для списку перегляду */}
                         {loadingWatchlist ? (
                             <div className="flex justify-center"><Spinner /></div>
-                        ) : filteredWatchlistItems.length === 0 ? (
-                            <p className="text-center text-gray-400">
-                                {searchTerm ? `Нічого не знайдено за запитом "${searchTerm}".` : 'Ваш список перегляду порожній.'}
-                            </p>
                         ) : (
-                             // ВИПРАВЛЕНО: Переконались, що div коректно закритий
-                             <div className="flex gap-6 justify-center flex-wrap">
-                                {/* ВИКОРИСТОВУЄМО filteredWatchlistItems ДЛЯ ВІДОБРАЖЕННЯ */}
-                                {filteredWatchlistItems.map(item => (
-                                     // Передаємо дані елемента списку перегляду до ReviewCard
-                                     // ReviewCard очікує поля tmdbId, mediaType, title, posterPath, rating (userRating), comment (userNotes)
-                                    <ReviewCard
-                                        key={item._id}
-                                        review={{ // Форматуємо об'єкт для ReviewCard
-                                            _id: item._id, // Важливо для ключа та видалення
-                                            tmdbId: item.externalId,
-                                            mediaType: item.mediaType,
-                                            title: item.title,
-                                            posterPath: item.posterPath, // Або item.poster_full_url, якщо бекенд його додає
-                                            rating: item.userRating, // Використовуємо userRating як rating
-                                            comment: item.userNotes, // Використовуємо userNotes як comment
-                                            updatedAt: item.updatedAt,
-                                            // Додайте інші поля, які потрібні ReviewCard
-                                        }}
-                                        // Можливо, передайте обробники видалення/оновлення до ReviewCard, якщо вони там потрібні
-                                        // onDelete={() => handleDeleteItem(item._id)}
-                                        // onUpdate={(updateData) => handleUpdateItem(item._id, updateData)}
-                                    />
-                                ))}
-                            </div>
+                            <> {/* Використовуємо фрагмент для групування */}
+                                {/* Секція Фільми */}
+                                <div className="mb-8">
+                                    <h3 className="text-xl font-semibold text-white mb-4">Фільми ({filteredMovies.length})</h3>
+                                    {filteredMovies.length === 0 ? (
+                                        <p className="text-center text-gray-400">
+                                            {searchTerm ? `Фільмів не знайдено за запитом "${searchTerm}".` : 'У вашому списку перегляду немає фільмів.'}
+                                        </p>
+                                    ) : (
+                                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+                                            {filteredMovies.map(item => (
+                                                // --- ВИКОРИСТОВУЄМО MOVIECARD ---
+                                                <MovieCard
+                                                    key={item._id}
+                                                    item={item} // Передаємо весь об'єкт елемента списку перегляду
+                                                    onRemove={handleDeleteItem} // Передаємо обробник видалення
+                                                />
+                                                // --- ---
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Секція Серіали */}
+                                <div>
+                                    <h3 className="text-xl font-semibold text-white mb-4">Серіали ({filteredTvShows.length})</h3>
+                                    {filteredTvShows.length === 0 ? (
+                                        <p className="text-center text-gray-400">
+                                             {searchTerm ? `Серіалів не знайдено за запитом "${searchTerm}".` : 'У вашому списку перегляду немає серіалів.'}
+                                        </p>
+                                    ) : (
+                                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+                                            {filteredTvShows.map(item => (
+                                                // --- ВИКОРИСТОВУЄМО SERIESCARD ---
+                                                <SeriesCard
+                                                    key={item._id}
+                                                    item={item} // Передаємо весь об'єкт елемента списку перегляду
+                                                    onRemove={handleDeleteItem} // Передаємо обробник видалення
+                                                />
+                                                // --- ---
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         )}
                     </div>
                 )}
@@ -338,5 +332,3 @@ const MyLibraryPage = () => {
 };
 
 export default MyLibraryPage;
-
-

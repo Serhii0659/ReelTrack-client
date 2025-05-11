@@ -1,3 +1,4 @@
+// \client\src\api\user.js
 import axios from 'axios';
 
 // Використовуємо змінну середовища для базового URL API
@@ -36,7 +37,7 @@ export const addContentToUserLibrary = async (contentData) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований для додавання до бібліотеки.');
+            throw new Error('Користувач не авторизований для додавання до бібліотеки.');
         }
         const response = await axios.post(
             `${API_BASE_URL}/api/watchlist`, // Ендпоінт для додавання нового елемента до списку перегляду
@@ -59,7 +60,7 @@ export const fetchUserProfile = async () => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+            throw new Error('Користувач не авторизований.');
         }
         const response = await axios.get(`${API_BASE_URL}/api/users/profile`, authConfig); // Передаємо об'єкт конфігурації Axios
         return response.data;
@@ -79,14 +80,14 @@ export const fetchUserProfile = async () => {
 export const updateUserProfile = async (userData, avatarFile) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
 
         const formData = new FormData();
         // Додаємо дані користувача до FormData
         for (const key in userData) {
-            if (userData[key] !== undefined) {
+            if (Object.prototype.hasOwnProperty.call(userData, key) && userData[key] !== undefined) {
                 formData.append(key, userData[key]);
             }
         }
@@ -120,9 +121,9 @@ export const updateUserProfile = async (userData, avatarFile) => {
  */
 export const fetchFriends = async () => {
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         const response = await axios.get(`${API_BASE_URL}/api/users/friends`, authConfig); // Передаємо об'єкт конфігурації Axios
         return response.data; // Очікуємо масив друзів
@@ -139,9 +140,9 @@ export const fetchFriends = async () => {
  */
 export const fetchFriendRequests = async () => {
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         const response = await axios.get(`${API_BASE_URL}/api/users/friends/requests`, authConfig); // Передаємо об'єкт конфігурації Axios
         return response.data; // Очікуємо масив запитів
@@ -159,9 +160,9 @@ export const fetchFriendRequests = async () => {
  */
 export const sendFriendRequest = async (userId) => {
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це /api/users/friends/request/:userId
         const response = await axios.post(`${API_BASE_URL}/api/users/friends/request/${userId}`, {}, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -180,9 +181,9 @@ export const sendFriendRequest = async (userId) => {
  */
 export const acceptFriendRequest = async (userId) => { // Змінено параметр на userId згідно з маршрутом бекенду
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це /api/users/friends/accept/:userId
         const response = await axios.post(`${API_BASE_URL}/api/users/friends/accept/${userId}`, {}, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -199,12 +200,11 @@ export const acceptFriendRequest = async (userId) => { // Змінено пар�
  * @returns {Promise<Object>} - Відповідь від сервера.
  * @throws {Error} - Викидає помилку, якщо запит не вдався.
  */
-// ВИПРАВЛЕНО: Спрощено функцію відповідно до маршруту DELETE /api/users/friends/remove/:userId
 export const rejectOrRemoveFriend = async (userId) => {
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це DELETE /api/users/friends/remove/:userId
         const response = await axios.delete(`${API_BASE_URL}/api/users/friends/remove/${userId}`, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -222,12 +222,12 @@ export const rejectOrRemoveFriend = async (userId) => {
  * @throws {Error} - Викидає помилку, якщо запит не вдався.
  */
 export const searchUsers = async (query) => {
-     // Цей ендпоінт /api/users/search не був явно вказаний у наданій документації,
-     // але якщо він існує на бекенді і вимагає авторизації:
+    // Цей ендпоінт /api/users/search не був явно вказаний у наданій документації,
+    // але якщо він існує на бекенді і вимагає авторизації:
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований для пошуку.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований для пошуку.');
         }
         const response = await axios.get(`${API_BASE_URL}/api/users/search?q=${encodeURIComponent(query)}`, authConfig); // Передаємо об'єкт конфігурації Axios
         return response.data;
@@ -248,8 +248,8 @@ export const searchUsers = async (query) => {
 export const fetchUserWatchlist = async (params = {}) => { // Змінено назву на fetchUserWatchlist для ясності
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це GET /api/watchlist
         const response = await axios.get(`${API_BASE_URL}/api/watchlist`, { headers: authConfig.headers, params }); // Додаємо параметри запиту
@@ -270,12 +270,12 @@ export const fetchUserWatchlist = async (params = {}) => { // Змінено н�
 export const fetchFriendWatchlist = async (userId, params = {}) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             // Можливо, варто дозволити запит без авторизації, якщо список публічний?
-             // Це залежить від реалізації бекенду. Якщо бекенд обробляє публічний доступ,
-             // можна не кидати помилку тут, а передати порожні заголовки.
-             // Припускаємо, що для отримання списку друга потрібна авторизація.
-             throw new Error('Користувач не авторизований для перегляду списку друзів.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            // Можливо, варто дозволити запит без авторизації, якщо список публічний?
+            // Це залежить від реалізації бекенду. Якщо бекенд обробляє публічний доступ,
+            // можна не кидати помилку тут, а передати порожні заголовки.
+            // Припускаємо, що для отримання списку друга потрібна авторизація.
+            throw new Error('Користувач не авторизований для перегляду списку друзів.');
         }
         // Згідно з документацією, це GET /api/users/:userId/watchlist
         const response = await axios.get(`${API_BASE_URL}/api/users/${userId}/watchlist`, { headers: authConfig.headers, params });
@@ -297,8 +297,8 @@ export const fetchFriendWatchlist = async (userId, params = {}) => {
 export const updateWatchlistItem = async (itemId, updateData) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це PUT /api/watchlist/:id
         const response = await axios.put(`${API_BASE_URL}/api/watchlist/${itemId}`, updateData, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -311,6 +311,7 @@ export const updateWatchlistItem = async (itemId, updateData) => {
 
 /**
  * Видаляє елемент зі списку перегляду користувача.
+ * Ця функція також використовується для видалення контенту з бібліотеки користувача.
  * @param {string} itemId - ID елемента списку перегляду.
  * @returns {Promise<Object>} - Відповідь від сервера (зазвичай, { message: "..." }).
  * @throws {Error} - Викидає помилку, якщо запит не вдався.
@@ -318,8 +319,8 @@ export const updateWatchlistItem = async (itemId, updateData) => {
 export const deleteWatchlistItem = async (itemId) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це DELETE /api/watchlist/:id
         const response = await axios.delete(`${API_BASE_URL}/api/watchlist/${itemId}`, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -339,14 +340,54 @@ export const deleteWatchlistItem = async (itemId) => {
 export const fetchWatchlistItemDetails = async (itemId) => {
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований.');
         }
         // Згідно з документацією, це GET /api/watchlist/:id
         const response = await axios.get(`${API_BASE_URL}/api/watchlist/${itemId}`, authConfig); // Передаємо об'єкт конфігурації Axios
         return response.data; // Очікуємо об'єкт елемента списку перегляду
     } catch (error) {
         console.error(`Помилка при отриманні деталей елемента списку перегляду ${itemId}:`, error.response?.data || error.message);
+        throw error;
+    }
+};
+
+/**
+ * Отримує статус контенту в бібліотеці поточного користувача для певного елемента.
+ * *** ОНОВЛЕНО: Тепер отримує весь список перегляду і фільтрує його на клієнті. ***
+ * @param {string} mediaType - Тип медіа (наприклад, 'movie' або 'tv').
+ * @param {string} tmdbId - ID контенту з TMDB (буде використано як externalId).
+ * @returns {Promise<{ exists: boolean, internalId: string | null, status: string | null }>} - Об'єкт зі статусом існування елемента.
+ * @throws {Error} - Викидає помилку, якщо запит не вдався.
+ */
+export const getUserWatchlistStatus = async (mediaType, tmdbId) => {
+    try {
+        const authConfig = getAuthHeaders();
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            // Якщо користувач не авторизований, він не може мати елементів у списку перегляду
+            return { exists: false, internalId: null, status: null };
+        }
+
+        // Отримуємо весь список перегляду користувача
+        const response = await axios.get(`${API_BASE_URL}/api/watchlist`, authConfig);
+        const watchlistItems = response.data.items; // Припускаємо, що API повертає об'єкт з полем 'items'
+
+        // Шукаємо потрібний елемент у отриманому списку за externalId та mediaType
+        const existingItem = watchlistItems.find(
+            item => String(item.externalId) === String(tmdbId) && item.mediaType === mediaType
+        );
+
+        if (existingItem) {
+            // Якщо знайдено, повертаємо його внутрішній ID та поточний статус
+            return { exists: true, internalId: existingItem._id, status: existingItem.status };
+        } else {
+            return { exists: false, internalId: null, status: null };
+        }
+    } catch (error) {
+        console.error(`Помилка при отриманні статусу списку перегляду для ${mediaType}/${tmdbId}:`, error.response?.data || error.message);
+        // Якщо бекенд повертає 404 (або іншу помилку) при запиті всього списку,
+        // це не означає, що конкретного елемента немає, а що щось не так із запитом списку.
+        // Викидаємо помилку для подальшої обробки.
         throw error;
     }
 };
@@ -383,8 +424,8 @@ export const fetchContentDetails = async (mediaType, tmdbId) => {
  */
 export const fetchContentReviews = async (mediaType, tmdbId) => {
     try {
-         // Цей ендпоінт на бекенді (/api/content/:mediaType/:tmdbId/reviews) може бути публічним або вимагати авторизації.
-         // Якщо бекенд вимагає авторизацію, додайте getAuthHeaders().
+        // Цей ендпоінт на бекенді (/api/content/:mediaType/:tmdbId/reviews) може бути публічним або вимагати авторизації.
+        // Якщо бекенд вимагає авторизацію, додайте getAuthHeaders().
         const response = await axios.get(`${API_BASE_URL}/api/content/${mediaType}/${tmdbId}/reviews`);
         return response.data;
     } catch (error) {
@@ -401,16 +442,14 @@ export const fetchContentReviews = async (mediaType, tmdbId) => {
  */
 export const submitContentReview = async (reviewData) => {
     try {
-        // ВИПРАВЛЕНО: Додано contentTitle та contentPosterPath до деструктуризації
         const { mediaType, tmdbId, rating, comment, reviewId, contentTitle, contentPosterPath } = reviewData;
         let response;
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
 
         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований для надсилання відгуку.');
+            throw new Error('Користувач не авторизований для надсилання відгуку.');
         }
 
-        // ВИПРАВЛЕНО: Додано contentTitle та contentPosterPath до тіла запиту
         const dataToSend = {
             rating,
             comment,
@@ -420,14 +459,9 @@ export const submitContentReview = async (reviewData) => {
 
         if (reviewId) {
             // Оновлення існуючого відгуку: PUT /api/content/:mediaType/:tmdbId/reviews/:reviewId
-            // При оновленні, можливо, не потрібно надсилати tmdbId, mediaType, contentTitle, contentPosterPath
-            // Це залежить від реалізації бекенду. Якщо бекенд очікує лише rating та comment для оновлення,
-            // залиште dataToSend як { rating, comment }.
-            // Якщо бекенд дозволяє оновлення інших полів, додайте їх до dataToSend.
             response = await axios.put(`${API_BASE_URL}/api/content/${mediaType}/${tmdbId}/reviews/${reviewId}`, dataToSend, authConfig); // Передаємо об'єкт конфігурації Axios
         } else {
             // Створення нового відгуку: POST /api/content/:mediaType/:tmdbId/reviews
-            // При створенні потрібні всі обов'язкові поля
             const createData = {
                 ...dataToSend,
                 tmdbId: String(tmdbId), // Переконайтесь, що tmdbId є рядком, якщо так очікує бекенд
@@ -453,8 +487,8 @@ export const getUserReviews = async () => {
     try {
         // Цей запит вимагає авторизації, оскільки отримує дані конкретного користувача
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований для перегляду своїх відгуків.');
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований для перегляду своїх відгуків.');
         }
         // Згідно з документацією бекенду, ендпоінт для відгуків користувача: /api/users/my-reviews
         const response = await axios.get(`${API_BASE_URL}/api/users/my-reviews`, authConfig); // Передаємо об'єкт конфігурації Axios
@@ -465,53 +499,132 @@ export const getUserReviews = async () => {
     }
 };
 
+/**
+ * Функція для видалення відгуку, залишеного поточним користувачем.
+ * @param {string} reviewId - ID відгуку, який потрібно видалити.
+ * @returns {Promise<Object>} - Відповідь від сервера.
+ * @throws {Error} - Викидає помилку, якщо запит не вдався.
+ */
+export const deleteUserReview = async (reviewId) => {
+    try {
+        const authConfig = getAuthHeaders();
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований для видалення відгуку.');
+        }
+        // Припустимо, що ендпоінт для видалення відгуку: DELETE /api/users/my-reviews/:reviewId
+        const response = await axios.delete(`${API_BASE_URL}/api/users/my-reviews/${reviewId}`, authConfig);
+        return response.data; // Очікуємо повідомлення про успіх
+    } catch (error) {
+        console.error(`Помилка при видаленні відгуку користувача ${reviewId}:`, error.response?.data || error.message);
+        throw error;
+    }
+};
 
 /**
- * Функція для додавання/видалення контенту з бібліотеки користувача.
- * Використовує ендпоінт бекенду /api/watchlist/toggle.
- * @param {Object} contentData - Об'єкт, що містить дані контенту (mediaType, tmdbId, title, poster_path, release_date тощо).
- * @returns {Promise<Object>} - Відповідь від сервера (зазвичай, { message: "...", added: true/false }).
+ * Функція для отримання відгуку поточного авторизованого користувача для певного контенту.
+ * @param {string} mediaType - Тип медіа (наприклад, 'movie' або 'tv').
+ * @param {string} tmdbId - ID контенту з TMDB.
+ * @returns {Promise<Object>} - Об'єкт відгуку або null/undefined, якщо відгук відсутній.
+ * @throws {Error} - Викидає помилку, якщо запит не вдався.
+ */
+export const getUserReviewForContent = async (mediaType, tmdbId) => {
+    try {
+        const authConfig = getAuthHeaders();
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований для отримання власного відгуку.');
+        }
+        // Припустимо, що такий ендпоінт існує на бекенді
+        const response = await axios.get(`${API_BASE_URL}/api/content/${mediaType}/${tmdbId}/my-review`, authConfig);
+        return response.data; // Очікуємо об'єкт відгуку
+    } catch (error) {
+        console.error(`Помилка при отриманні відгуку користувача для контенту ${mediaType}/${tmdbId}:`, error.response?.data || error.message);
+        // Якщо відгуку немає, бекенд може повернути 404. Обробляйте це в компоненті.
+        if (error.response && error.response.status === 404) {
+            return null; // Відгук не знайдено
+        }
+        throw error;
+    }
+};
+
+
+/**
+ * Функція для додавання/видалення контенту з бібліотеки користувача або зміни його статусу.
+ * *** ОНОВЛЕНО: Тепер викликає єдиний ендпоінт бекенду `/api/watchlist/toggle`. ***
+ * Бекенд має містити логіку для визначення, чи потрібно додати, оновити або видалити елемент.
+ * @param {Object} contentData - Об'єкт, що містить дані контенту (externalId, mediaType, status, title, posterPath, releaseDate, genres, overview тощо).
+ * @returns {Promise<Object>} - Відповідь від сервера (зазвичай, об'єкт доданого/оновленого елемента або повідомлення про видалення).
  * @throws {Error} - Викидає помилку, якщо запит не вдався.
  */
 export const toggleContentInUserLibrary = async (contentData) => {
     try {
-         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований для зміни бібліотеки.');
+        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            throw new Error('Користувач не авторизований для зміни бібліотеки.');
         }
-        // Згідно з документацією бекенду, ендпоінт для перемикання: /api/watchlist/toggle
+
+        // Відправляємо запит POST на /api/watchlist/toggle.
+        // Вся логіка щодо існування елемента, його оновлення або видалення
+        // повинна бути реалізована в контролері бекенду (toggleWatchlistContent).
         const response = await axios.post(
-            `${API_BASE_URL}/api/watchlist/toggle`, // <-- ВИПРАВЛЕНО: Правильний URL для маршруту бекенду
-            contentData, // Передаємо повний об'єкт з даними контенту
-            authConfig // Передаємо об'єкт конфігурації Axios
+            `${API_BASE_URL}/api/watchlist/toggle`,
+            contentData, // Відправляємо всі дані контенту, які потрібні бекенду для toggle-логіки
+            authConfig
         );
-        return response.data; // Очікуємо, що бекенд поверне, чи було додано/видалено
+        return response.data; // Очікуємо відповідь від бекенду, що показує результат toggle-операції
     } catch (error) {
         console.error('Помилка при зміні статусу контенту в бібліотеці:', error.response?.data || error.message);
         throw error;
     }
 };
 
-/**
- * Функція для видалення контенту з бібліотеки користувача.
- * @param {string} itemId - ID елемента списку перегляду.
- * @returns {Promise<Object>} - Відповідь від сервера (зазвичай, { message: "..." }).
- * @throws {Error} - Викидає помилку, якщо запит не вдався.
- */
-export const removeContentFromUserLibrary = async (itemId) => { // Змінено параметр на itemId для ясності
+// ВИДАЛЕНО: Функцію `removeContentFromUserLibrary` було видалено,
+// оскільки її функціонал повністю дублює `deleteWatchlistItem`.
+// Використовуйте `deleteWatchlistItem` для видалення елемента зі списку перегляду.
+
+
+// Функції, пов'язані з автентифікацією (повернено для повноти)
+export const registerUser = async (userData) => {
     try {
-        const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
-         if (!authConfig.headers || !authConfig.headers.Authorization) {
-             throw new Error('Користувач не авторизований.');
-        }
-        // Згідно з документацією, це DELETE /api/watchlist/:id
-        const response = await axios.delete(`${API_BASE_URL}/api/watchlist/${itemId}`, authConfig); // Передаємо об'єкт конфігурації Axios
-        return response.data; // Очікуємо повідомлення про успіх
+        const response = await axios.post(`${API_BASE_URL}/api/auth/register`, userData);
+        return response.data;
     } catch (error) {
-        console.error(`Помилка при видаленні елемента списку перегляду ${itemId}:`, error.response?.data || error.message);
+        console.error("Помилка при реєстрації:", error.response?.data || error.message);
         throw error;
     }
 };
 
+export const loginUser = async (credentials) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/api/auth/login`, credentials);
+        // При успішному вході зберігаємо токен
+        if (response.data.accessToken) { // Змінено з response.data.token на response.data.accessToken згідно з документацією
+            localStorage.setItem('authToken', response.data.accessToken);
+        }
+        return response.data;
+    } catch (error) {
+        console.error("Помилка при вході:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
+// Примітка: у вашій документації не було ендпоінта /api/auth/verify.
+// Якщо він існує, переконайтеся, що він повертає потрібні дані користувача.
+// Якщо його немає, використовуйте /api/users/profile для верифікації.
+export const verifyToken = async () => {
+    try {
+        const authConfig = getAuthHeaders();
+        if (!authConfig.headers || !authConfig.headers.Authorization) {
+            return null; // Токен відсутній, користувач не автентифікований
+        }
+        // Припускаємо, що /api/auth/verify повертає інформацію про користувача.
+        // Якщо ні, використовуйте fetchUserProfile() тут.
+        const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, authConfig);
+        return response.data.user;
+    } catch (error) {
+        console.error("Помилка при верифікації токена:", error.response?.data || error.message);
+        localStorage.removeItem('authToken'); // Очистити недійсний токен
+        return null;
+    }
+};
 
 

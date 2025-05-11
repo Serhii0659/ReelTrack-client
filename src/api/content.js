@@ -1,4 +1,4 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\api\content.js
+// \client\src\api\content.js
 import axios from 'axios';
 
 // Отримайте ваш TMDB API ключ з змінних середовища
