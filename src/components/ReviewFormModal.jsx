@@ -82,7 +82,7 @@ const ReviewFormModal = ({ item, onClose, onReviewSubmit, existingReview }) => {
                         </label>
                         <textarea
                             id="comment"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
                             rows="4"
                             placeholder="Що ви думаєте про цей контент?"
                             value={comment}
