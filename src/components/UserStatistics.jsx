@@ -1,6 +1,7 @@
+// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\UserStatistics.jsx
 import React, { useState, useEffect } from 'react';
 import { FaChartPie, FaListAlt, FaFolderOpen } from 'react-icons/fa';
-import { getWatchlist } from '../api/user'; // <--- ЗМІНЕНО: Імпортуємо getWatchlist з user.js
+import { getWatchlist } from '../api/user';
 
 function UserStatistics() {
     const [statistics, setStatistics] = useState({
@@ -22,8 +23,7 @@ function UserStatistics() {
                 setLoading(true);
                 setError(null);
 
-                // Використовуємо функцію getWatchlist з user.js
-                const response = await getWatchlist(); // <--- Виклик функції getWatchlist
+                const response = await getWatchlist();
                 const items = response.items;
 
                 const newStatusBreakdown = {
@@ -57,7 +57,7 @@ function UserStatistics() {
 
     if (loading) {
         return (
-            <div className="w-full max-w-[600px] h-[480px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mr-8 mt-[0.5px] flex items-center justify-center">
+            <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mt-[35px] flex items-center justify-center">
                 Завантаження статистики...
             </div>
         );
@@ -65,40 +65,43 @@ function UserStatistics() {
 
     if (error) {
         return (
-            <div className="w-full max-w-[600px] h-[480px] bg-[#272727] p-6 rounded-[20px] text-red-500 shadow-md mr-8 mt-[0.5px] flex items-center justify-center">
+            <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-red-500 shadow-md mt-[35px] flex items-center justify-center">
                 Помилка: {error}
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-[600px] h-[480px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mr-8 mt-[0.5px]">
+        <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mt-[35px]">
             <h3 className="text-white font-bold text-4xl text-center mb-6">
                 Ваша статистика
             </h3>
 
             <div className="mb-6">
-                <div className="flex items-center gap-3 font-semibold text-2xl mb-2">
-                    <div className="w-9 h-9 bg-[#D9D9D9] rounded-full flex items-center justify-center">
-                        <FaListAlt className="text-black" />
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 bg-[#D9D9D9] rounded-full flex items-center justify-center flex-shrink-0">
+                        <FaListAlt className="text-black text-xl" />
                     </div>
-                    <span className="text-white font-bold text-[20px]">
+                    <span className="text-white font-bold text-lg flex-1 min-w-0">
                         Загальна кількість елементів у списку:
+                        <span className="ml-2 font-normal">{statistics.totalItems}</span>
                     </span>
                 </div>
-                <p className="text-lg ml-8">{statistics.totalItems}</p>
+                {/* ВИДАЛЕНО: Тег <p> для кількості був тут, тепер він не потрібен */}
             </div>
 
             <div className="mb-6">
-                <div className="flex items-center gap-3 font-semibold text-2xl mb-2">
-                    <div className="w-9 h-9 bg-[#D9D9D9] rounded-full flex items-center justify-center">
-                        <FaChartPie className="text-black" />
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 bg-[#D9D9D9] rounded-full flex items-center justify-center flex-shrink-0">
+                       <FaChartPie className="text-black text-xl" />
                     </div>
-                    <span className="text-white font-bold text-[20px]">
+                    {/* ЗМІНЕНО ТУТ: Розмір шрифту на text-lg (18px) для консистентності */}
+                    <span className="text-white font-bold text-lg flex-1 min-w-0">
                         Статус перегляду:
                     </span>
                 </div>
-                <ul className="list-disc list-inside ml-8 text-lg">
+                {/* ВИПРАВЛЕНО: pl-12 для правильного відступу списку */}
+                <ul className="list-disc list-inside text-lg pl-12">
                     <li>Переглядаються: {statistics.statusBreakdown.watching}</li>
                     <li>Завершено: {statistics.statusBreakdown.completed}</li>
                     <li>Заплановано: {statistics.statusBreakdown.plan_to_watch}</li>
