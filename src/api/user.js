@@ -1,4 +1,3 @@
-// \client\src\api\user.js
 import axios from 'axios';
 
 // Використовуємо змінну середовища для базового URL API
@@ -238,18 +237,18 @@ export const searchUsers = async (query) => {
 };
 
 
-// ОНОВЛЕНО: Ендпоінти для бібліотеки/списку перегляду тепер використовують '/api/watchlist'
+// ОНОВЛЕНО: Функція для отримання списку перегляду користувача (перейменовано з fetchUserWatchlist)
 /**
  * Отримує список контенту в бібліотеці поточного користувача.
  * @param {Object} [params] - Параметри запиту (наприклад, { status: 'completed', page: 1 }).
  * @returns {Promise<Object>} - Об'єкт з даними списку перегляду (items, totalPages тощо).
  * @throws {Error} - Викидає помилку, якщо запит не вдався.
  */
-export const fetchUserWatchlist = async (params = {}) => { // Змінено назву на fetchUserWatchlist для ясності
+export const getWatchlist = async (params = {}) => { // <--- ПЕРЕЙМЕНОВАНО НА getWatchlist
     try {
         const authConfig = getAuthHeaders(); // Отримуємо конфігурацію авторизації
         if (!authConfig.headers || !authConfig.headers.Authorization) {
-            throw new Error('Користувач не авторизований.');
+            throw new Error('Користувач не авторизований для отримання списку перегляду.');
         }
         // Згідно з документацією, це GET /api/watchlist
         const response = await axios.get(`${API_BASE_URL}/api/watchlist`, { headers: authConfig.headers, params }); // Додаємо параметри запиту

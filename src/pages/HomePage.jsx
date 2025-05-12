@@ -3,7 +3,7 @@ import Header from '../components/Header';
 import NowWatching from '../components/NowWatching';
 import NewReleases from '../components/NewReleases';
 import ReviewTabs from '../components/ReviewTabs';
-import SocialFeed from '../components/SocialFeed';
+import UserStatistics from '../components/UserStatistics'; // <--- ЗМІНЕНО: Імпортуємо UserStatistics під правильною назвою
 import RatingPieChart from '../components/RatingPieChart';
 import { useAuth } from '../context/AuthContext';
 
@@ -43,8 +43,8 @@ const HomePage = () => {
             <div className="grid-item">
               <ReviewTabs />
             </div>
-            <div className="grid-item">  
-              <SocialFeed />
+            <div className="grid-item">
+              <UserStatistics /> {/* <--- ЗМІНЕНО: Використовуємо UserStatistics */}
             </div>
           </div>
 
@@ -52,7 +52,7 @@ const HomePage = () => {
           <div className="flex justify-center mt-8">
             <RatingPieChart data={contentStats} />
           </div>
-        </div> {/* ← Цей div був незакритий */}
+        </div>
       </main>
     </div>
   );

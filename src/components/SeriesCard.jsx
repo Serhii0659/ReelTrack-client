@@ -2,6 +2,7 @@
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import RatingPieChart from './RatingPieChart'; // <--- ДОДАЙТЕ ЦЕЙ ІМПОРТ
 
 // Компонент для відображення картки серіалу в бібліотеці користувача
 const SeriesCard = ({ item, onRemove }) => {
@@ -15,7 +16,24 @@ const SeriesCard = ({ item, onRemove }) => {
     };
 
     // Отримуємо рік з поля releaseDate (яке використовується для обох типів контенту в WatchlistItem)
+    // Для серіалів, можливо, краще використовувати item.firstAirDate, якщо воно є, але item.releaseDate теж підійде, якщо так надходять дані
     const releaseYear = item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'Невідомий';
+
+    // <--- ДОДАЙТЕ ЦЮ ЛОГІКУ ДЛЯ РЕЙТИНГУ (аналогічно MovieCard)
+    const displayRating = (item.userRating !== undefined && item.userRating !== null && item.userRating > 0)
+                          ? item.userRating
+                          : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
+                            ? item.mediaRating
+                            : null; // Якщо немає жодного дійсного рейтингу, встановлюємо в null
+
+    // <--- ДОДАЙТЕ ЦІ КОНСОЛЬНІ ЛОГИ ДЛЯ ДЕБАГУ (аналогічно MovieCard)
+    console.log('--- SeriesCard Debug ---');
+    console.log('Item ID:', item._id);
+    console.log('Item Title:', item.title);
+    console.log('item.userRating:', item.userRating, typeof item.userRating);
+    console.log('item.mediaRating:', item.mediaRating, typeof item.mediaRating);
+    console.log('displayRating (sent to chart):', displayRating, typeof displayRating);
+    console.log('--- End SeriesCard Debug ---');
 
     return (
         // Картка серіалу з фоном, тінями та округлими кутами
@@ -37,6 +55,24 @@ const SeriesCard = ({ item, onRemove }) => {
                 {/* Тип контенту та рік */}
                 <p className="text-gray-400 text-sm mb-2">Серіал ({releaseYear})</p> {/* ВИПРАВЛЕНО: Використовуємо releaseYear */}
             </Link>
+
+            {/* <--- ДОДАЙТЕ ЦЕЙ БЛОК З РЕНДЕРИНГОМ ДІАГРАМИ РЕЙТИНГУ (аналогічно MovieCard) */}
+            {displayRating !== null && ( // Рендеримо тільки якщо є дійсний рейтинг
+                <div
+                    className="rating-display"
+                    style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        zIndex: 10,
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        borderRadius: '50%',
+                        padding: '5px'
+                    }}
+                >
+                    <RatingPieChart rating={displayRating} size={50} showTooltip={false} /> {/* Зменшив size для SeriesCard */}
+                </div>
+            )}
 
             {/* Кнопка видалення */}
             {/* При кліку викликаємо onRemove, передаючи ID елемента бібліотеки та його назву */}

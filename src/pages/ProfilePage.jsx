@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchUserProfile, updateUserProfile } from '../api/user';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+// Імпорт сторінки бібліотеки. Припускається, що файл знаходиться за шляхом './pages/MyLibraryPage.jsx' відносно поточної папки.
 import { toast } from 'react-toastify';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -106,11 +107,11 @@ const ProfilePage = () => {
 
         // Якщо є новий пароль, додаємо поля для зміни пароля
         if (formData.newPassword) {
-             // Перевіряємо, чи введено поточний пароль при зміні нового
+            // Перевіряємо, чи введено поточний пароль при зміні нового
             if (!formData.currentPassword) {
-                 setError('Будь ласка, введіть поточний пароль для зміни пароля.');
-                 toast.error('Будь ласка, введіть поточний пароль для зміни пароля.');
-                 return;
+                setError('Будь ласка, введіть поточний пароль для зміни пароля.');
+                toast.error('Будь ласка, введіть поточний пароль для зміни пароля.');
+                return;
             }
             dataToUpdate.currentPassword = formData.currentPassword;
             dataToUpdate.password = formData.newPassword; // ВИПРАВЛЕНО: Поле на бекенді називається 'password'
@@ -141,8 +142,8 @@ const ProfilePage = () => {
             // Оновити стан користувача в AuthContext, якщо дані користувача змінились
             // Припускаємо, що AuthContext має функцію setUser або refreshUser
             // if (updatedProfile) {
-            //     // authUser.setUser(updatedProfile); // Якщо є така функція в контексті
-            //     // Або просто оновити локальний стан користувача в контексті, якщо він там зберігається
+            //    // authUser.setUser(updatedProfile); // Якщо є така функція в контексті
+            //    // Або просто оновити локальний стан користувача в контексті, якщо він там зберігається
             // }
         } catch (err) {
             console.error('Помилка оновлення профілю:', err);
@@ -157,11 +158,39 @@ const ProfilePage = () => {
         }
     };
 
+    // НОВА ФУНКЦІЯ: Копіювання тексту у буфер обміну
+    const copyToClipboard = (text) => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    toast.success('ID скопійовано до буферу обміну!');
+                })
+                .catch(err => {
+                    console.error('Не вдалося скопіювати ID:', err);
+                    toast.error('Не вдалося скопіювати ID.');
+                });
+        } else {
+            // Fallback для старих браузерів (старий метод)
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                toast.success('ID скопійовано до буферу обміну (застарілий метод)!');
+            } catch (err) {
+                console.error('Не вдалося скопіювати ID (застарілий метод):', err);
+                toast.error('Не вдалося скопіювати ID.');
+            }
+            document.body.removeChild(textarea);
+        }
+    };
+
     // Відображення стану завантаження
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                 <Header /> {/* Додано Header */}
+                <Header /> {/* Додано Header */}
                 Завантаження профілю...
             </div>
         );
@@ -171,7 +200,7 @@ const ProfilePage = () => {
     if (error && !authUser) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
-                 <Header /> {/* Додано Header */}
+                <Header /> {/* Додано Header */}
                 <p>Помилка: {error}. <Link to="/login" className="text-blue-500 hover:underline">Увійти</Link></p>
             </div>
         );
@@ -181,7 +210,7 @@ const ProfilePage = () => {
     if (!profile) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                 <Header /> {/* Додано Header */}
+                <Header /> {/* Додано Header */}
                 Профіль не знайдено або стався збій.
             </div>
         );
@@ -292,19 +321,63 @@ const ProfilePage = () => {
                             </div>
                         </form>
                     ) : (
-                        // Відображення даних профілю
-                        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-                            {/* ВИДАЛЕНО: Блок для відображення аватара */}
-                            <div className="flex-1 text-center md:text-left">
-                                {/* ВИПРАВЛЕНО: Відображаємо profile.name */}
-                                <p className="text-2xl font-semibold mb-2 text-white">Ім'я користувача: <span className="text-[#e50914]">{profile.name}</span></p> {/* Змінено колір на червоний */}
-                                <p className="text-gray-300 mb-4">Email: <span className="text-gray-400">{profile.email}</span></p>
-                                {/* Можна додати відображення інших публічних полів, якщо вони є в об'єкті profile */}
+                        // Відображення даних профілю у новому дизайні
+                        <div className="flex flex-col items-center text-center space-y-6">
+                            {/* Аватар (заглушка) */}
+                            <div className="w-32 h-32 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden border-4 border-[#e50914] shadow-xl">
+                                {/* Тут можна додати <img>, якщо у вас є URL аватару */}
+                                <span className="text-6xl font-bold text-white">
+                                    {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                                </span>
+                            </div>
+
+                            {/* Інформація про користувача */}
+                            <div className="text-white">
+                                <h2 className="text-4xl font-bold mb-2">{profile.name}</h2>
+                                <p className="text-gray-300 text-lg mb-2">
+                                    Email: <span className="text-gray-400">{profile.email}</span>
+                                </p>
+                                <p className="text-gray-300 text-lg mb-4">
+                                    ID користувача:
+                                    <span
+                                        className="text-gray-400 cursor-pointer hover:text-gray-200 transition-colors ml-2"
+                                        onClick={() => copyToClipboard(profile._id)}
+                                        title="Натисніть, щоб скопіювати ID"
+                                    >
+                                        {profile._id}
+                                    </span>
+                                </p>
+                            </div>
+
+                            {/* Кнопки дій */}
+                            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full justify-center mt-6 pt-6 border-t border-gray-700">
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
                                 >
-                                    Редагувати Профіль
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Налаштування Профілю
+                                </button>
+                                <Link
+                                    to="/library" // Припустимо, що це шлях до сторінки списків
+                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                    </svg>
+                                    Мої Списки
+                                </Link>
+                                <button
+                                    onClick={logout}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Вийти
                                 </button>
                             </div>
                         </div>

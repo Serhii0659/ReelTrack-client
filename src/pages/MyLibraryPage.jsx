@@ -1,8 +1,15 @@
 // C:\Users\kreps\Documents\Projects\ReelTrack\client\src\pages\MyLibraryPage.jsx
 import React, { useEffect, useState, useMemo } from 'react';
 // Імпортуємо потрібні функції API
-import { fetchUserWatchlist, deleteWatchlistItem, updateWatchlistItem, getUserReviews } from '../api/user';
-import Header from '../components/Header';
+import {
+    getWatchlist,
+    getUserReviews,
+    updateWatchlistItem,
+    deleteWatchlistItem,
+    toggleContentInUserLibrary,
+    fetchWatchlistItemDetails
+} from '../api/user';
+// import Header from '../components/Header'; // <-- ЦЕЙ РЯДОК ВИДАЛЕНО
 import Spinner from '../components/Spinner'; // Припускаємо, що у вас є компонент Spinner
 import SearchBar from '../components/SearchBar'; // Імпорт компонента SearchBar
 // --- ДОДАНО: Імпорт MovieCard та SeriesCard ---
@@ -16,6 +23,8 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 const MyLibraryPage = () => {
+    console.log('MyLibraryPage: Компонент MyLibraryPage рендериться.');
+
     const { isAuthenticated, loading: authLoading } = useAuth();
     const navigate = useNavigate();
 
@@ -37,6 +46,7 @@ const MyLibraryPage = () => {
 
     // Функція для завантаження списку перегляду користувача
     const loadUserWatchlist = async () => {
+        console.log('MyLibraryPage: loadUserWatchlist викликана.');
         // Не завантажуємо, якщо користувач не автентифікований або AuthContext ще завантажується
         if (!isAuthenticated || authLoading) {
             setLoadingWatchlist(false);
@@ -49,9 +59,9 @@ const MyLibraryPage = () => {
         setErrorWatchlist(null);
         console.log('MyLibraryPage: Завантаження списку перегляду користувача...');
         try {
-            const data = await fetchUserWatchlist();
+            const data = await getWatchlist();
             console.log('MyLibraryPage: Отримано список перегляду:', data);
-            // Припускаємо, що fetchUserWatchlist повертає об'єкт з полем 'items'
+            // Припускаємо, що getWatchlist повертає об'єкт з полем 'items'
             setWatchlistItems(Array.isArray(data.items) ? data.items : []);
         } catch (err) {
             console.error('MyLibraryPage: Помилка завантаження списку перегляду:', err);
@@ -69,53 +79,56 @@ const MyLibraryPage = () => {
     };
 
     // Функція для завантаження відгуків користувача
-     const loadUserReviews = async () => {
-         if (!isAuthenticated || authLoading) {
-             setLoadingReviews(false);
-             setErrorReviews(null);
-             setUserReviews([]);
-             return;
-         }
+    const loadUserReviews = async () => {
+         console.log('MyLibraryPage: loadUserReviews викликана.');
+        if (!isAuthenticated || authLoading) {
+            setLoadingReviews(false);
+            setErrorReviews(null);
+            setUserReviews([]);
+            return;
+        }
 
-         setLoadingReviews(true);
-         setErrorReviews(null);
-         console.log('MyLibraryPage: Завантаження відгуків користувача...');
-         try {
-             const reviews = await getUserReviews(); // Викликаємо функцію API для відгуків
-             console.log('MyLibraryPage: Отримано відгуки:', reviews);
-             // Припускаємо, що getUserReviews повертає масив відгуків
-             setUserReviews(Array.isArray(reviews) ? reviews : []);
-         } catch (error) {
-             console.error('MyLibraryPage: Помилка завантаження відгуків:', error);
-             const msg = error.response?.data?.message || 'Не вдалося завантажити відгуки.';
-             setErrorReviews(msg);
-             toast.error(msg);
-             setUserReviews([]); // Очищаємо відгуки при помилці
-             if (error.response?.status === 401) {
-                 toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
-                 // logout(); // Викликайте logout з AuthContext
-             }
-         } finally {
-             setLoadingReviews(false);
-         }
-     };
+        setLoadingReviews(true);
+        setErrorReviews(null);
+        console.log('MyLibraryPage: Завантаження відгуків користувача...');
+        try {
+            const reviews = await getUserReviews();
+            console.log('MyLibraryPage: Отримано відгуки:', reviews);
+            // Припускаємо, що getUserReviews повертає масив відгуків
+            setUserReviews(Array.isArray(reviews) ? reviews : []);
+        } catch (error) {
+            console.error('MyLibraryPage: Помилка завантаження відгуків:', error);
+            const msg = error.response?.data?.message || 'Не вдалося завантажити відгуки.';
+            setErrorReviews(msg);
+            toast.error(msg);
+            setUserReviews([]); // Очищаємо відгуки при помилці
+            if (error.response?.status === 401) {
+                toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
+                // logout(); // Викликайте logout з AuthContext
+            }
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
 
 
     useEffect(() => {
-        // Перенаправляємо, якщо користувач не автентифікований після завершення завантаження AuthContext
+        console.log('MyLibraryPage: useEffect спрацював. isAuthenticated:', isAuthenticated, 'authLoading:', authLoading); // НОВИЙ ЛОГ
+
         if (!authLoading && !isAuthenticated) {
-             navigate('/login');
-             toast.info('Будь ласка, увійдіть, щоб переглянути вашу бібліотеку.');
-             return;
+            console.log('MyLibraryPage: Користувач не автентифікований, перенаправлення на /login.'); // НОВИЙ ЛОГ
+            navigate('/login');
+            toast.info('Будь ласка, увійдіть, щоб переглянути вашу бібліотеку.');
+            return;
         }
 
-        // Завантажуємо дані, якщо користувач автентифікований
         if (isAuthenticated) {
+            console.log('MyLibraryPage: Користувач автентифікований, спроба завантажити дані...'); // НОВИЙ ЛОГ
             loadUserWatchlist();
-            loadUserReviews(); // Завантажуємо відгуки
+            loadUserReviews();
         }
 
-    }, [isAuthenticated, authLoading, navigate]); // Залежності: перезавантажуємо при зміні стану автентифікації
+    }, [isAuthenticated, authLoading, navigate]);
 
     // ВИКОРИСТАННЯ useMemo ДЛЯ ФІЛЬТРАЦІЇ та РОЗДІЛЕННЯ
     const { filteredMovies, filteredTvShows } = useMemo(() => {
@@ -124,7 +137,7 @@ const MyLibraryPage = () => {
         const filteredItems = watchlistItems.filter(item =>
             item.title.toLowerCase().includes(lowerCaseSearchTerm) ||
             item.genres?.some(genre => genre.toLowerCase().includes(lowerCaseSearchTerm)) ||
-             item.userNotes?.toLowerCase().includes(lowerCaseSearchTerm)
+            item.userNotes?.toLowerCase().includes(lowerCaseSearchTerm)
         );
 
         // Розділяємо відфільтровані елементи на фільми та серіали
@@ -138,9 +151,9 @@ const MyLibraryPage = () => {
     // Обробник видалення елемента зі списку перегляду
     const handleDeleteItem = async (itemId) => {
         if (!itemId || typeof itemId !== 'string' || itemId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(itemId)) {
-             toast.error('Невірний ID елемента.');
-             console.error('Attempted to delete with invalid itemId:', itemId);
-             return;
+            toast.error('Невірний ID елемента.');
+            console.error('Attempted to delete with invalid itemId:', itemId);
+            return;
         }
 
         try {
@@ -161,9 +174,9 @@ const MyLibraryPage = () => {
     // Обробник оновлення елемента (наприклад, зміна статусу або оцінки)
     const handleUpdateItem = async (itemId, updateData) => {
         if (!itemId || typeof itemId !== 'string' || itemId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(itemId)) {
-             toast.error('Невірний ID елемента.');
-             console.error('Attempted to update with invalid itemId:', itemId);
-             return;
+            toast.error('Невірний ID елемента.');
+            console.error('Attempted to update with invalid itemId:', itemId);
+            return;
         }
         console.log(`MyLibraryPage: Оновлення елемента ${itemId} з даними:`, updateData);
         try {
@@ -173,10 +186,10 @@ const MyLibraryPage = () => {
             setWatchlistItems(prevItems =>
                 prevItems.map(item => (item._id === itemId ? updatedItem : item))
             );
-             // Якщо оновлення включає оцінку або коментар, можливо, потрібно оновити список відгуків
-             if (updateData.userRating !== undefined || updateData.userNotes !== undefined) {
-                 loadUserReviews(); // Найпростіший спосіб - перезавантажити відгуки
-             }
+            // Якщо оновлення включає оцінку або коментар, можливо, потрібно оновити список відгуків
+            if (updateData.userRating !== undefined || updateData.userNotes !== undefined) {
+                loadUserReviews(); // Найпростіший спосіб - перезавантажити відгуки
+            }
         } catch (err) {
             console.error('Помилка оновлення елемента:', err);
             const msg = err.response?.data?.message || 'Не вдалося оновити елемент.';
@@ -196,37 +209,36 @@ const MyLibraryPage = () => {
     // Якщо користувач не автентифікований після завантаження
     if (!isAuthenticated) {
         return (
-             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                 <Header />
-                 <p>Будь ласка, увійдіть, щоб переглянути вашу бібліотеку.</p>
-             </div>
+            // <Header /> // <-- ВИДАЛЕНО
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
+                <p>Будь ласка, увійдіть, щоб переглянути вашу бібліотеку.</p>
+            </div>
         );
     }
 
     // Відображення, якщо є помилка завантаження списку перегляду
     if (errorWatchlist && watchlistItems.length === 0 && activeTab === 'watchlist') {
         return (
+            // <Header /> // <-- ВИДАЛЕНО
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
-                <Header />
                 Помилка завантаження списку перегляду: {errorWatchlist}
             </div>
         );
     }
 
-     // Відображення, якщо є помилка завантаження відгуків
+    // Відображення, якщо є помилка завантаження відгуків
     if (errorReviews && userReviews.length === 0 && activeTab === 'reviews') {
-         return (
-             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
-                 <Header />
-                 Помилка завантаження відгуків: {errorReviews.message || 'Невідома помилка'}
-             </div>
-         );
+        return (
+            // <Header /> // <-- ВИДАЛЕНО
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
+                Помилка завантаження відгуків: {errorReviews.message || 'Невідома помилка'}
+            </div>
+        );
     }
-
 
     return (
         <div className="bg-[#171717] min-h-screen text-white pt-24">
-            <Header />
+            {/* <Header /> // <-- ЦЕЙ РЯДОК ТАКОЖ ВИДАЛЕНО */}
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Моя Бібліотека</h1>
 
@@ -255,7 +267,7 @@ const MyLibraryPage = () => {
                         <div className="mb-6">
                             <SearchBar
                                 searchTerm={searchTerm}
-                                onSearchChange={setSearchTerm} // Передаємо функцію для оновлення стану
+                                onSearchChange={setSearchTerm}
                                 placeholder="Пошук за назвою, жанром або нотатками..."
                             />
                         </div>
@@ -292,7 +304,7 @@ const MyLibraryPage = () => {
                                     <h3 className="text-xl font-semibold text-white mb-4">Серіали ({filteredTvShows.length})</h3>
                                     {filteredTvShows.length === 0 ? (
                                         <p className="text-center text-gray-400">
-                                             {searchTerm ? `Серіалів не знайдено за запитом "${searchTerm}".` : 'У вашому списку перегляду немає серіалів.'}
+                                            {searchTerm ? `Серіалів не знайдено за запитом "${searchTerm}".` : 'У вашому списку перегляду немає серіалів.'}
                                         </p>
                                     ) : (
                                         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
@@ -316,13 +328,13 @@ const MyLibraryPage = () => {
                 {activeTab === 'reviews' && (
                     <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg max-w-4xl mx-auto">
                         <h2 className="text-2xl font-bold mb-4 text-center text-white">Мої Відгуки та Оцінки</h2>
-                         {loadingReviews ? (
+                        {loadingReviews ? (
                             <div className="flex justify-center"><Spinner /></div>
-                         ) : userReviews.length === 0 ? (
-                             <p className="text-center text-gray-400">У вас ще немає відгуків.</p>
-                         ) : (
-                             <ReviewGroup reviews={userReviews} /> 
-                         )}
+                        ) : userReviews.length === 0 ? (
+                            <p className="text-center text-gray-400">У вас ще немає відгуків.</p>
+                        ) : (
+                            <ReviewGroup reviews={userReviews} />
+                        )}
                     </div>
                 )}
 
