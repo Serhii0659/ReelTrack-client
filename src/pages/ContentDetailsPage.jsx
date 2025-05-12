@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchContentDetails } from '../api/content';
+import { fetchContentDetails } from '../api/content'; // Переконайтеся, що ця функція може отримувати credits та videos
 import {
     getUserReviewForContent,
     submitContentReview,
@@ -10,8 +10,9 @@ import {
 } from '../api/user';
 import { AuthContext } from '../context/AuthContext';
 import Spinner from '../components/Spinner';
-import ReviewTabs from '../components/ReviewTabs';
 import ReviewFormModal from '../components/ReviewFormModal';
+import CastSection from '../components/CastSection'; // Новий імпорт
+import TrailersSection from '../components/TrailersSection'; // Новий імпорт
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { Star, Eye, Heart, List, Trash, Edit, CalendarDays, Clock } from 'lucide-react';
@@ -29,6 +30,8 @@ const ContentDetailsPage = () => {
     const [userReview, setUserReview] = useState(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [userWatchlistStatus, setUserWatchlistStatus] = useState(null);
+    const [cast, setCast] = useState([]); // Новий стан для акторського складу
+    const [trailers, setTrailers] = useState([]); // Новий стан для трейлерів
 
     // Fetch content details based on mediaType and tmdbId from URL params
     useEffect(() => {
@@ -44,9 +47,19 @@ const ContentDetailsPage = () => {
             console.log(`ContentDetailsPage: Завантаження деталей для ${mediaType}/${tmdbId}...`);
             try {
                 setLoading(true);
+                // Припускаємо, що fetchContentDetails тепер повертає credits та videos
                 const details = await fetchContentDetails(mediaType, tmdbId);
                 setContentDetails(details);
+                setCast(details.credits?.cast || []); // Отримуємо акторський склад з details.credits
+                // Фільтруємо лише офіційні трейлери з YouTube
+                const youtubeTrailers = details.videos?.results.filter(video =>
+                    video.type === 'Trailer' && video.site === 'YouTube'
+                ) || [];
+                setTrailers(youtubeTrailers);
+
                 console.log('ContentDetailsPage: Отримано деталі:', details);
+                console.log('ContentDetailsPage: Отримано акторський склад:', details.credits?.cast);
+                console.log('ContentDetailsPage: Отримано трейлери:', youtubeTrailers);
             } catch (err) {
                 console.error("ContentDetailsPage: Помилка завантаження деталей контенту:", err);
                 setError('Не вдалося завантажити деталі контенту. Спробуйте пізніше.');
@@ -258,7 +271,7 @@ const ContentDetailsPage = () => {
                         <img
                             src={contentDetails.poster_path ? `https://image.tmdb.org/t/p/w500${contentDetails.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'}
                             alt={contentDetails.title || contentDetails.name}
-                            className="w-[200px] h-[300px] rounded-lg shadow-xl flex-shrink-0 object-cover border-2 border-gray-700"
+                            className="w-[200px] h-[300px] rounded-lg shadow-xl flex-shrink-0 object-cover border-2 border-gray-900"
                         />
                         <div className="md:ml-8 mt-4 md:mt-0 text-center md:text-left">
                             <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">{contentDetails.title || contentDetails.name}</h1>
@@ -321,9 +334,9 @@ const ContentDetailsPage = () => {
                 </div>
 
                 {isAuthenticated && userReview && (
-                    <div className="p-8 border-t border-gray-700 mt-8">
+                    <div className="p-8 border-t border-gray-900 mt-8">
                         <h3 className="text-2xl font-bold text-white mb-4">Ваш відгук</h3>
-                        <div className="bg-gray-800 rounded-lg p-6 shadow-md">
+                        <div className="bg-[#171717] rounded-lg p-6 shadow-md">
                             <div className="flex items-center mb-4">
                                 <Star className="w-6 h-6 text-yellow-500 mr-2" fill="currentColor" />
                                 <span className="text-xl font-semibold">{userReview.rating}</span>
@@ -349,8 +362,14 @@ const ContentDetailsPage = () => {
                     </div>
                 )}
 
-                <div className="p-8 border-t border-gray-700 mt-8">
-                    <ReviewTabs tmdbId={tmdbId} mediaType={mediaType} />
+                {/* Нова секція "Акторський склад" */}
+                <div className="p-8 border-t border-gray-900 mt-8">
+                    <CastSection cast={cast} />
+                </div>
+
+                {/* Нова секція "Трейлери" */}
+                <div className="p-8 border-t border-gray-900 mt-8">
+                    <TrailersSection trailers={trailers} />
                 </div>
 
                 {/* УМОВНИЙ РЕНДЕРИНГ: Рендеримо модальне вікно лише, якщо воно відкрите І contentDetails вже завантажено */}

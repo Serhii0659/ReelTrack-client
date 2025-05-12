@@ -315,7 +315,7 @@ const MyLibraryPage = () => {
 
                         {/* Вміст вкладок */}
                         {activeTab === 'watchlist' && (
-                            <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg">
+                            <div className="bg-[#171717] p-6 rounded-lg shadow-lg">
                                 <h2 className="text-2xl font-bold mb-4 text-center text-white">Список Перегляду</h2>
 
                                 <div className="mb-6">

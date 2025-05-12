@@ -41,7 +41,7 @@ const MovieCard = ({ item, onRemove, onUpdate }) => {
     ];
 
     return (
-        <div className="w-64 bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
+        <div className="w-64 bg-[#171717] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
             {/* Обгортаємо основний вміст картки у Link для переходу на сторінку деталей */}
             <Link
                 to={`/content/${item.mediaType}/${item.externalId}`}
