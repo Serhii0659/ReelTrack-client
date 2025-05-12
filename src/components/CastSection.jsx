@@ -1,11 +1,6 @@
-import React from 'react';
-
 const CastSection = ({ cast }) => {
-    if (!cast || cast.length === 0) {
-        return null; // Не рендеримо компонент, якщо немає даних про акторський склад
-    }
+    if (!cast || cast.length === 0) return null;
 
-    // Обмежуємо кількість відображуваних акторів, наприклад, до 10
     const displayedCast = cast.slice(0, 10);
 
     return (

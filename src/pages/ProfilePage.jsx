@@ -1,126 +1,88 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\pages\ProfilePage.jsx
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchUserProfile, updateUserProfile } from '../api/user';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { useNavigate, Link } from 'react-router-dom';
-
+import { Link } from 'react-router-dom';
 
 const ProfilePage = () => {
-    // Отримуємо поточного авторизованого користувача та функцію logout з AuthContext
     const { user: authUser, logout } = useAuth();
-    const navigate = useNavigate();
 
-    // Стан для зберігання даних профілю, отриманих з бекенду
     const [profile, setProfile] = useState(null);
-    // Стан для індикації завантаження даних
     const [loading, setLoading] = useState(true);
-    // Стан для зберігання помилок
     const [error, setError] = useState(null);
-    // Стан для перемикання між режимами перегляду та редагування
     const [isEditing, setIsEditing] = useState(false);
-    // ВИДАЛЕНО: Стан для перемикання між секціями "Профіль" та "Мої Списки"
-    // const [activeSection, setActiveSection] = useState('profile'); // 'profile' або 'library'
-
-    // Стан для даних форми редагування
     const [formData, setFormData] = useState({
-        // ВИПРАВЛЕНО: Використовуємо 'name' замість 'username' відповідно до бекенду
         name: '',
         email: '',
-        currentPassword: '', // Поточний пароль для зміни пароля
-        newPassword: '', // Новий пароль
-        confirmNewPassword: '', // Підтвердження нового пароля
-        // ВИДАЛЕНО: Поле avatarUrl
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
     });
 
-    // Ефект для завантаження профілю користувача при завантаженні сторінки
     useEffect(() => {
         const getProfile = async () => {
-            // Якщо користувач не авторизований, встановлюємо стан та перенаправляємо
             if (!authUser) {
                 setLoading(false);
                 setError('Користувач не авторизований.');
-                // navigate('/login'); // Можливо, краще перенаправляти у батьківському компоненті або роуті
                 return;
             }
             try {
                 setLoading(true);
                 setError(null);
-                // Викликаємо API для отримання профілю поточного користувача
                 const data = await fetchUserProfile();
-                // Встановлюємо отримані дані профілю
                 setProfile(data);
-                // Заповнюємо форму редагування даними з профілю
                 setFormData({
-                    // ВИПРАВЛЕНО: Використовуємо data.name
                     name: data.name || '',
                     email: data.email || '',
                     currentPassword: '',
                     newPassword: '',
                     confirmNewPassword: '',
-                    // ВИДАЛЕНО: Ініціалізація avatarUrl
                 });
             } catch (err) {
-                console.error('Помилка отримання профілю:', err);
                 const msg = err.response?.data?.message || 'Не вдалося завантажити профіль.';
                 setError(msg);
                 toast.error(msg);
-                // Якщо помилка 401 (Не авторизовано), виконуємо вихід
                 if (err.response?.status === 401) {
                     toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
                     logout();
                 }
             } finally {
-                setLoading(false); // Завершуємо завантаження
+                setLoading(false);
             }
         };
-
-        // Викликаємо функцію завантаження профілю
         getProfile();
-        // Залежності ефекту: перезавантажуємо при зміні authUser, navigate або logout
-    }, [authUser, navigate, logout]);
+    }, [authUser, logout]);
 
-    // Обробник зміни значень полів форми
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Оновлюємо відповідне поле в стані formData
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Обробник надсилання форми редагування
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Запобігаємо стандартній відправці форми
-        setError(null); // Очищаємо попередні помилки
+        e.preventDefault();
+        setError(null);
 
-        // Перевірка на збіг нового пароля та підтвердження
         if (formData.newPassword && formData.newPassword !== formData.confirmNewPassword) {
             setError('Новий пароль та підтвердження не збігаються.');
             toast.error('Новий пароль та підтвердження не збігаються.');
             return;
         }
 
-        // Формуємо об'єкт з даними, які потрібно оновити
         const dataToUpdate = {};
-        // ВИПРАВЛЕНО: Порівнюємо та додаємо 'name'
         if (formData.name !== profile.name) dataToUpdate.name = formData.name;
         if (formData.email !== profile.email) dataToUpdate.email = formData.email;
-        // ВИДАЛЕНО: Перевірка та додавання avatarUrl
-        // if (formData.avatarUrl !== profile.avatarUrl) dataToUpdate.avatarUrl = formData.avatarUrl;
 
-        // Якщо є новий пароль, додаємо поля для зміни пароля
         if (formData.newPassword) {
-            // Перевіряємо, чи введено поточний пароль при зміні нового
             if (!formData.currentPassword) {
                 setError('Будь ласка, введіть поточний пароль для зміни пароля.');
                 toast.error('Будь ласка, введіть поточний пароль для зміни пароля.');
                 return;
             }
             dataToUpdate.currentPassword = formData.currentPassword;
-            dataToUpdate.password = formData.newPassword; // ВИПРАВЛЕНО: Поле на бекенді називається 'password'
+            dataToUpdate.password = formData.newPassword;
         }
 
-        // Якщо немає жодних змін, виводимо повідомлення та виходимо з режиму редагування
         if (Object.keys(dataToUpdate).length === 0) {
             toast.info('Немає змін для збереження.');
             setIsEditing(false);
@@ -128,32 +90,20 @@ const ProfilePage = () => {
         }
 
         try {
-            // Викликаємо API для оновлення профілю
-            // ВИПРАВЛЕНО: updateUserProfile тепер приймає тільки dataToUpdate та опціонально файл аватара (який ми не передаємо тут)
             const updatedProfile = await updateUserProfile(dataToUpdate);
-            // Оновлюємо стан профілю отриманими даними
             setProfile(updatedProfile);
             toast.success('Профіль успішно оновлено!');
-            setIsEditing(false); // Виходимо з режиму редагування
-            // Очищаємо поля паролів у формі після успішного оновлення
+            setIsEditing(false);
             setFormData(prev => ({
                 ...prev,
                 currentPassword: '',
                 newPassword: '',
                 confirmNewPassword: ''
             }));
-            // Оновити стан користувача в AuthContext, якщо дані користувача змінились
-            // Припускаємо, що AuthContext має функцію setUser або refreshUser
-            // if (updatedProfile) {
-            //    // authUser.setUser(updatedProfile); // Якщо є така функція в контексті
-            //    // Або просто оновити локальний стан користувача в контексті, якщо він там зберігається
-            // }
         } catch (err) {
-            console.error('Помилка оновлення профілю:', err);
             const msg = err.response?.data?.message || 'Не вдалося оновити профіль.';
-            setError(msg); // Встановлюємо помилку
-            toast.error(msg); // Показуємо повідомлення про помилку
-            // Якщо помилка 401, виконуємо вихід
+            setError(msg);
+            toast.error(msg);
             if (err.response?.status === 401) {
                 toast.info("Ваша сесія закінчилася. Будь ласка, увійдіть знову.");
                 logout();
@@ -161,19 +111,12 @@ const ProfilePage = () => {
         }
     };
 
-    // НОВА ФУНКЦІЯ: Копіювання тексту у буфер обміну
     const copyToClipboard = (text) => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text)
-                .then(() => {
-                    toast.success('ID скопійовано до буферу обміну!');
-                })
-                .catch(err => {
-                    console.error('Не вдалося скопіювати ID:', err);
-                    toast.error('Не вдалося скопіювати ID.');
-                });
+                .then(() => toast.success('ID скопійовано до буферу обміну!'))
+                .catch(() => toast.error('Не вдалося скопіювати ID.'));
         } else {
-            // Fallback для старих браузерів (старий метод)
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
@@ -181,66 +124,54 @@ const ProfilePage = () => {
             try {
                 document.execCommand('copy');
                 toast.success('ID скопійовано до буферу обміну (застарілий метод)!');
-            } catch (err) {
-                console.error('Не вдалося скопіювати ID (застарілий метод):', err);
+            } catch {
                 toast.error('Не вдалося скопіювати ID.');
             }
             document.body.removeChild(textarea);
         }
     };
 
-    // Відображення стану завантаження
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                <Header /> {/* Додано Header */}
+                <Header />
                 Завантаження профілю...
             </div>
         );
     }
 
-    // Відображення помилки, якщо користувач не авторизований
     if (error && !authUser) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-500 pt-24">
-                <Header /> {/* Додано Header */}
+                <Header />
                 <p>Помилка: {error}. <Link to="/login" className="text-gray-500 hover:underline">Увійти</Link></p>
             </div>
         );
     }
 
-    // Відображення повідомлення, якщо профіль не завантажився (наприклад, помилка 404 або інша)
     if (!profile) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                <Header /> {/* Додано Header */}
+                <Header />
                 Профіль не знайдено або стався збій.
             </div>
         );
     }
 
-    // Основне відображення сторінки профілю
     return (
         <div className="bg-[#171717] min-h-screen text-white pt-24">
             <Header />
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-white">Ваш Профіль</h1>
-
                 <div className="bg-[#171717] p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
-
-                    {/* Відображення помилок в межах форми */}
                     {error && (
                         <div className="bg-gray-900 text-gray-300 p-3 rounded-md mb-4">
                             {error}
                         </div>
                     )}
-
-                    {/* Залишено лише відображення профілю, оскільки секції "Мої Списки" більше немає */}
                     {isEditing ? (
-                        // Форма редагування профілю
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                {/* ВИПРАВЛЕНО: Лейбл та поле для 'name' */}
                                 <label htmlFor="name" className="block text-gray-300 text-sm font-bold mb-2">Ім'я користувача:</label>
                                 <input
                                     type="text"
@@ -264,9 +195,6 @@ const ProfilePage = () => {
                                     required
                                 />
                             </div>
-                            {/* ВИДАЛЕНО: Блок для URL аватара */}
-                            {/* ВИДАЛЕНО: Блок для завантаження файлу аватара (якщо був) */}
-
                             <div className="pt-4 border-t border-gray-700">
                                 <h3 className="text-xl font-semibold mb-4 text-white">Змінити пароль (необов'язково)</h3>
                                 <div>
@@ -279,7 +207,6 @@ const ProfilePage = () => {
                                         onChange={handleChange}
                                         className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                         placeholder="Введіть поточний пароль"
-                                        // Поле обов'язкове, тільки якщо введено новий пароль
                                         required={!!formData.newPassword}
                                     />
                                 </div>
@@ -325,17 +252,12 @@ const ProfilePage = () => {
                             </div>
                         </form>
                     ) : (
-                        // Відображення даних профілю у новому дизайні
                         <div className="flex flex-col items-center text-center space-y-6">
-                            {/* Аватар (заглушка) */}
                             <div className="w-32 h-32 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden border-4 border-[#e50914] shadow-xl">
-                                {/* Тут можна додати <img>, якщо у вас є URL аватару */}
                                 <span className="text-6xl font-bold text-white">
                                     {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
                                 </span>
                             </div>
-
-                            {/* Інформація про користувача */}
                             <div className="text-white">
                                 <h2 className="text-4xl font-bold mb-2">{profile.name}</h2>
                                 <p className="text-gray-300 text-lg mb-2">
@@ -352,8 +274,6 @@ const ProfilePage = () => {
                                     </span>
                                 </p>
                             </div>
-
-                            {/* Кнопки дій */}
                             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full justify-center mt-6 pt-6 border-t border-gray-700">
                                 <button
                                     onClick={() => setIsEditing(true)}
@@ -365,7 +285,6 @@ const ProfilePage = () => {
                                     </svg>
                                     Редагувати Профіль
                                 </button>
-                                {/* Додано кнопку "Вийти" тут, оскільки її видалено з верхньої панелі, але функціонал залишено */}
                                 <button
                                     onClick={logout}
                                     className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"

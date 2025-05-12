@@ -14,13 +14,11 @@ const NowWatching = () => {
                 setLoading(true);
                 setError(null);
                 const results = await getTrendingContent('all', 'day', 1);
-                // ОНОВЛЕНО ТУТ: Фільтруємо, щоб залишити лише "movie" або "tv"
                 const filteredResults = results.filter(
                     item => item.media_type === 'movie' || item.media_type === 'tv'
                 );
                 setTrendingContent(filteredResults);
-            } catch (err) {
-                console.error("Помилка при отриманні трендового контенту:", err);
+            } catch {
                 setError('Не вдалося завантажити популярний контент. Спробуйте пізніше.');
                 setTrendingContent([]);
             } finally {
@@ -33,7 +31,6 @@ const NowWatching = () => {
 
     if (loading) {
         return (
-            // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
             <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px]">
                 <Spinner />
             </div>
@@ -42,7 +39,6 @@ const NowWatching = () => {
 
     if (error) {
         return (
-            // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
             <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px] text-red-500">
                 Помилка: {error}
             </div>
@@ -50,7 +46,6 @@ const NowWatching = () => {
     }
 
     return (
-        // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
         <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px]">
             <h2 className="text-white font-bold text-[20px] mb-4">Зараз дивляться</h2>
             <div className="flex gap-4 overflow-x-auto pb-2">
@@ -59,14 +54,11 @@ const NowWatching = () => {
                         <Link
                             to={`/content/${content.media_type}/${content.id}`}
                             key={content.id}
-                            // ОНОВЛЕНО: Розмір та стилі картки відповідно до NewReleases та ReviewCard
                             className="relative w-[150px] h-[200px] bg-[#272727] rounded-[10px] flex-shrink-0 overflow-hidden shadow-lg hover:scale-105 transition-transform duration-200 ease-in-out flex flex-col"
                         >
-                            {/* ОНОВЛЕНО: Розмір та фон для контейнера зображення */}
                             <div className="w-full h-[200px] bg-gray-700 flex items-center justify-center overflow-hidden">
                                 {content.poster_path ? (
                                     <img
-                                        // ОНОВЛЕНО: Змінено розмір зображення на w300 для кращої якості
                                         src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
                                         alt={content.title || content.name}
                                         className="w-full h-full object-cover"
@@ -77,7 +69,6 @@ const NowWatching = () => {
                                     </div>
                                 )}
                             </div>
-                            {/* ВИДАЛЕНО: Назва фільму/серіалу під постером */}
                         </Link>
                     ))
                 ) : (

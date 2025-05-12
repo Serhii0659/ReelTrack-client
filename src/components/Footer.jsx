@@ -1,9 +1,8 @@
-// src/components/Footer.jsx
 export default function Footer() {
     return (
         <footer className="bg-gray-800 text-white text-center p-4 text-sm mt-auto">
             <p>
-                This app uses the{" "}
+                This app uses the{' '}
                 <a
                     href="https://www.themoviedb.org/"
                     className="underline text-blue-400"
@@ -11,7 +10,7 @@ export default function Footer() {
                     rel="noopener noreferrer"
                 >
                     TMDB API
-                </a>{" "}
+                </a>{' '}
                 but is not endorsed or certified by TMDB.
             </p>
             <img

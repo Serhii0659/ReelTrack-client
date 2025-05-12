@@ -1,5 +1,4 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\NewReleases.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getNewReleases } from '../api/content';
 import { Link } from 'react-router-dom';
 import Spinner from './Spinner';
@@ -16,15 +15,13 @@ const NewReleases = () => {
                 setError(null);
                 const results = await getNewReleases(1);
                 setNewReleases(results);
-            } catch (err) {
-                console.error("Помилка при отриманні нових релізів:", err);
+            } catch {
                 setError('Не вдалося завантажити нові релізи. Спробуйте пізніше.');
                 setNewReleases([]);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchNewReleasesData();
     }, []);
 
@@ -47,14 +44,12 @@ const NewReleases = () => {
     return (
         <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px]">
             <h2 className="text-white font-bold text-[20px] mb-4">Новинки</h2>
-
             <div className="flex gap-4 overflow-x-auto pb-2">
                 {newReleases.length > 0 ? (
                     newReleases.map((content) => (
                         <Link
                             to={`/content/${content.media_type || 'movie'}/${content.id}`}
                             key={content.id}
-                            // ЗМІНЕНО: Висоту картки з h-[280px] на h-[200px], щоб прибрати порожній простір
                             className="relative w-[150px] h-[200px] bg-[#272727] rounded-[10px] flex-shrink-0 overflow-hidden shadow-lg hover:scale-105 transition-transform duration-200 ease-in-out flex flex-col"
                         >
                             <div className="w-full h-[200px] bg-gray-700 flex items-center justify-center overflow-hidden">
@@ -70,7 +65,6 @@ const NewReleases = () => {
                                     </div>
                                 )}
                             </div>
-                            {/* Назва фільму/серіалу під постером (видалено в попередніх кроках) */}
                         </Link>
                     ))
                 ) : (

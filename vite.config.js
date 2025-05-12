@@ -1,15 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import { resolve } from 'path'; // Імпортуємо resolve з 'path'
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-// https://vitejs.dev/config/
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
   plugins: [react()],
-  resolve: { // resolve тепер всередині об'єкта конфігурації
+  resolve: {
     alias: [
-      { 
-        find: "@", 
-        replacement: resolve(__dirname, "./src") 
+      {
+        find: "@",
+        replacement: resolve(__dirname, "./src")
       }
     ]
   }

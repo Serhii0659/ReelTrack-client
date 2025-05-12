@@ -1,49 +1,32 @@
-import React from 'react';
 import Header from '../components/Header';
 import NowWatching from '../components/NowWatching';
 import NewReleases from '../components/NewReleases';
 import ReviewTabs from '../components/ReviewTabs';
-import UserStatistics from '../components/UserStatistics'; // <--- ЗМІНЕНО: Імпортуємо UserStatistics під правильною назвою
-import { useAuth } from '../context/AuthContext';
+import UserStatistics from '../components/UserStatistics';
 
 const HomePage = () => {
-  const { user } = useAuth();
-
-  const contentStats = [
-    { name: 'Фільми', value: 12 },
-    { name: 'Серіали', value: 8 },
-    { name: 'Мультфільми', value: 5 },
-  ];
-
   return (
     <div className="bg-[#171717] min-h-screen flex flex-col">
       <Header />
-
-      {/* Основний контент */}
       <main className="flex-grow p-4 pt-[72px]">
         <div className="max-w-screen-xl mx-auto">
-          {/* Заголовок сторінки */}
           <h1 className="text-white font-bold text-[48px] text-center mb-8">
             Твій особистий світ кіно
           </h1>
-
-          {/* Контейнер для сітки 2x1 з компонентами */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grid-item">
+            <div>
               <NewReleases />
             </div>
-            <div className="grid-item">
+            <div>
               <NowWatching />
             </div>
           </div>
-
-          {/* Відгуки та Соціальна стрічка з горизонтальним відступом */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-4 mt-6">
-            <div className="grid-item">
+            <div>
               <ReviewTabs />
             </div>
-            <div className="grid-item">
-              <UserStatistics /> {/* <--- ЗМІНЕНО: Використовуємо UserStatistics */}
+            <div>
+              <UserStatistics />
             </div>
           </div>
         </div>

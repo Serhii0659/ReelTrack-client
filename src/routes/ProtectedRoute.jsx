@@ -1,17 +1,13 @@
-import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Використовуємо useAuth
+import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = () => {
-    const { isAuthenticated, loading } = useAuth(); // Отримуємо стан з контексту
+    const { isAuthenticated, loading } = useAuth();
 
     if (loading) {
-        // Можна показати індикатор завантаження, поки йде перевірка автентифікації
         return <div>Loading...</div>;
     }
 
-    // Якщо користувач автентифікований, показуємо дочірній компонент (Outlet)
-    // Якщо ні, перенаправляємо на сторінку логіну
     return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 

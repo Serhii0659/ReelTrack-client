@@ -1,11 +1,8 @@
 import React from 'react';
 
 const TrailersSection = ({ trailers }) => {
-    if (!trailers || trailers.length === 0) {
-        return null; // Не рендеримо компонент, якщо немає трейлерів
-    }
+    if (!trailers || trailers.length === 0) return null;
 
-    // Обмежуємо кількість відображуваних трейлерів, наприклад, до 2
     const displayedTrailers = trailers.slice(0, 2);
 
     return (

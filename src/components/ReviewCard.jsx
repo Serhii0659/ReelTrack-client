@@ -1,10 +1,5 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\ReviewCard.jsx
-import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { uk } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { FaStar } from 'react-icons/fa';
-
 
 const StarRating = ({ rating }) => {
     const validRating = typeof rating === 'number' && rating >= 0 && rating <= 10 ? rating : 0;
@@ -12,30 +7,30 @@ const StarRating = ({ rating }) => {
 
     return (
         <div className="star-rating flex items-center mx-auto">
-            <FaStar className="text-yellow-500 mr-10 text-sm" />
+            <FaStar className="text-yellow-500 mr-1 text-sm" />
             <span className="text-white font-medium text-sm">{displayRating}</span>
             {validRating > 0 && <span className="text-gray-400 text-xs">/10</span>}
         </div>
     );
 };
 
-
 const ReviewCard = ({ review }) => {
     if (!review) return null;
 
-    // === ЗМІНА ТУТ ===
-    // Змінено 'userRating' на 'rating', оскільки саме так поле називається у вхідних даних.
-    const { _id, tmdbId, title, posterPath, mediaType, rating, userNotes, updatedAt, contentTitle, contentPosterPath } = review;
+    const {
+        _id,
+        tmdbId,
+        title,
+        posterPath,
+        mediaType,
+        rating,
+        contentTitle,
+        contentPosterPath,
+    } = review;
 
     const displayTitle = contentTitle || title;
     const displayPosterPath = contentPosterPath || posterPath;
-    
-    // Тепер 'rating' передається до parseFloat, хоча з консолі видно, що воно вже число.
-    // parseFloat залишаємо як безпечну перевірку.
     const displayRating = typeof rating === 'string' ? parseFloat(rating) : rating;
-    // =================
-
-    const displayComment = userNotes;
 
     const imageUrl = displayPosterPath
         ? displayPosterPath.startsWith('http')
@@ -54,14 +49,11 @@ const ReviewCard = ({ review }) => {
                     className="w-full h-full object-cover"
                 />
             </div>
-
             <div className="flex-grow p-2 flex flex-col justify-between">
                 <p className="text-white text-sm text-center line-clamp-2 font-medium">{displayTitle}</p>
-
                 <div className="mt-auto">
                     <StarRating rating={displayRating} />
                 </div>
-
             </div>
         </Link>
     );

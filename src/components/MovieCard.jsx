@@ -1,37 +1,27 @@
-import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const MovieCard = ({ item, onRemove, onUpdate }) => {
-    const getPosterUrl = (posterPath) => {
-        // Використовуємо розмір постера w300 для більш компактних карток
-        return posterPath ? `https://image.tmdb.org/t/p/w300${posterPath}` : 'https://via.placeholder.com/200x300?text=Без+постера';
-    };
+    const getPosterUrl = (posterPath) =>
+        posterPath
+            ? `https://image.tmdb.org/t/p/w300${posterPath}`
+            : 'https://via.placeholder.com/200x300?text=Без+постера';
 
     const releaseYear = item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'Невідомий';
 
-    const displayRating = (item.userRating !== undefined && item.userRating !== null && item.userRating > 0)
-                            ? item.userRating
-                            : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
-                                ? item.mediaRating
-                                : null;
+    const displayRating =
+        item.userRating !== undefined && item.userRating !== null && item.userRating > 0
+            ? item.userRating
+            : item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0
+            ? item.mediaRating
+            : null;
 
-    console.log('--- MovieCard Debug ---');
-    console.log('Item ID:', item._id);
-    console.log('Item Title:', item.title);
-    console.log('item.userRating:', item.userRating, typeof item.userRating);
-    console.log('item.mediaRating:', item.mediaRating, typeof item.mediaRating);
-    console.log('displayRating (sent to chart):', displayRating, typeof displayRating);
-    console.log('--- End MovieCard Debug ---');
-
-    // Функція для зміни статусу елемента
     const handleChangeStatus = (newStatus) => {
-        if (item.status !== newStatus) { // Оновлюємо лише якщо статус відрізняється
+        if (item.status !== newStatus) {
             onUpdate(item._id, { status: newStatus });
         }
     };
 
-    // Масив кнопок статусів
     const statusButtons = [
         { key: 'watching', text: 'Переглядаю', color: 'bg-blue-600' },
         { key: 'completed', text: 'Завершено', color: 'bg-green-600' },
@@ -42,7 +32,6 @@ const MovieCard = ({ item, onRemove, onUpdate }) => {
 
     return (
         <div className="w-64 bg-[#171717] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
-            {/* Обгортаємо основний вміст картки у Link для переходу на сторінку деталей */}
             <Link
                 to={`/content/${item.mediaType}/${item.externalId}`}
                 className="flex flex-col items-center text-center w-full"
@@ -56,7 +45,7 @@ const MovieCard = ({ item, onRemove, onUpdate }) => {
                 <p className="text-gray-400 text-sm mb-2">Фільм ({releaseYear})</p>
             </Link>
 
-            {displayRating !== null && ( // Рендеримо тільки якщо є дійсний рейтинг
+            {displayRating !== null && (
                 <div
                     className="rating-display"
                     style={{
@@ -73,19 +62,18 @@ const MovieCard = ({ item, onRemove, onUpdate }) => {
                 </div>
             )}
 
-            {/* Блок для кнопок зміни статусу */}
             <div className="flex flex-wrap justify-center gap-2 mt-4 mb-4">
                 {statusButtons.map((btn) => (
                     <button
                         key={btn.key}
-                        onClick={(e) => { // Запобігаємо переходу по посиланню
-                            e.preventDefault(); 
+                        onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             handleChangeStatus(btn.key);
                         }}
                         className={`${btn.color} text-white text-xs py-1 px-2 rounded-md transition-colors 
                                     ${item.status === btn.key ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
-                        disabled={item.status === btn.key} // Деактивуємо кнопку, якщо це поточний статус
+                        disabled={item.status === btn.key}
                     >
                         {btn.text}
                     </button>
@@ -93,8 +81,8 @@ const MovieCard = ({ item, onRemove, onUpdate }) => {
             </div>
 
             <button
-                onClick={(e) => { // Запобігаємо переходу по посиланню
-                    e.preventDefault(); 
+                onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     onRemove(item._id, item.title);
                 }}
