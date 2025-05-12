@@ -272,13 +272,13 @@ const FriendsPage = () => {
                         onClick={() => setTab('friends')}
                         className={`py-2 px-6 text-lg font-semibold rounded-l-lg transition-colors ${tab === 'friends' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                     >
-                        Мої Друзі ({friends.length})
+                        Мої Друзі 
                     </button>
                     <button
                         onClick={() => setTab('requests')}
                         className={`py-2 px-6 text-lg font-semibold rounded-r-lg transition-colors ${tab === 'requests' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                     >
-                        Запити ({friendRequests.length})
+                        Запити 
                     </button>
                 </div>
 

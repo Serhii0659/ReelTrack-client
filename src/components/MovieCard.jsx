@@ -1,7 +1,6 @@
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import RatingPieChart from './RatingPieChart';
 
 const MovieCard = ({ item, onRemove, onUpdate }) => {
     const getPosterUrl = (posterPath) => {

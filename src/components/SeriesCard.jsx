@@ -1,7 +1,6 @@
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import RatingPieChart from './RatingPieChart';
 
 // Компонент для відображення картки серіалу в бібліотеці користувача
 const SeriesCard = ({ item, onRemove, onUpdate }) => {

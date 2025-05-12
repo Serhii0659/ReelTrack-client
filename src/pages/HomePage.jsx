@@ -4,7 +4,6 @@ import NowWatching from '../components/NowWatching';
 import NewReleases from '../components/NewReleases';
 import ReviewTabs from '../components/ReviewTabs';
 import UserStatistics from '../components/UserStatistics'; // <--- ЗМІНЕНО: Імпортуємо UserStatistics під правильною назвою
-import RatingPieChart from '../components/RatingPieChart';
 import { useAuth } from '../context/AuthContext';
 
 const HomePage = () => {
@@ -46,11 +45,6 @@ const HomePage = () => {
             <div className="grid-item">
               <UserStatistics /> {/* <--- ЗМІНЕНО: Використовуємо UserStatistics */}
             </div>
-          </div>
-
-          {/* Пай-чарт по центру */}
-          <div className="flex justify-center mt-8">
-            <RatingPieChart data={contentStats} />
           </div>
         </div>
       </main>
