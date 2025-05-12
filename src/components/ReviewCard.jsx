@@ -12,7 +12,7 @@ const StarRating = ({ rating }) => {
 
     return (
         <div className="star-rating flex items-center mx-auto">
-            <FaStar className="text-yellow-500 mr-1 text-sm" />
+            <FaStar className="text-yellow-500 mr-10 text-sm" />
             <span className="text-white font-medium text-sm">{displayRating}</span>
             {validRating > 0 && <span className="text-gray-400 text-xs">/10</span>}
         </div>
@@ -62,15 +62,6 @@ const ReviewCard = ({ review }) => {
                     <StarRating rating={displayRating} />
                 </div>
 
-                {/* Можна додати відображення коментаря або дати, якщо потрібно на картці */}
-                {/*
-                {displayComment && (
-                    <p className="text-gray-400 text-xs mt-1 truncate">{displayComment}</p>
-                )}
-                {updatedAt && (
-                    <span className="text-gray-500 text-xs mt-1">{formatDistanceToNow(new Date(updatedAt), { addSuffix: true, locale: uk })}</span>
-                )}
-                */}
             </div>
         </Link>
     );
