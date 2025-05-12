@@ -33,7 +33,8 @@ const NowWatching = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#171717] rounded-lg p-4 shadow-md w-full max-w-[600px] mr-8 flex justify-center items-center h-[240px]">
+            // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
+            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px]">
                 <Spinner />
             </div>
         );
@@ -41,27 +42,32 @@ const NowWatching = () => {
 
     if (error) {
         return (
-            <div className="bg-[#171717] rounded-lg p-4 shadow-md w-full max-w-[600px] mr-8 flex justify-center items-center h-[240px] text-red-500">
+            // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
+            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px] text-red-500">
                 Помилка: {error}
             </div>
         );
     }
 
     return (
-        <div className="bg-[#171717] rounded-lg p-4 shadow-md w-full max-w-[600px] mr-8">
-            <h2 className="text-white font-bold text-[20px] mb-4">Зараз дивляться (Трендове)</h2>
+        // ВИДАЛЕНО: mr-8, залишено rounded-[8px] замість rounded-lg для консистентності
+        <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px]">
+            <h2 className="text-white font-bold text-[20px] mb-4">Зараз дивляться</h2>
             <div className="flex gap-4 overflow-x-auto pb-2">
                 {trendingContent.length > 0 ? (
                     trendingContent.map((content) => (
                         <Link
                             to={`/content/${content.media_type}/${content.id}`}
                             key={content.id}
-                            className="flex-shrink-0"
+                            // ОНОВЛЕНО: Розмір та стилі картки відповідно до NewReleases та ReviewCard
+                            className="relative w-[150px] h-[200px] bg-[#272727] rounded-[10px] flex-shrink-0 overflow-hidden shadow-lg hover:scale-105 transition-transform duration-200 ease-in-out flex flex-col"
                         >
-                            <div className="w-24 h-40 bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                            {/* ОНОВЛЕНО: Розмір та фон для контейнера зображення */}
+                            <div className="w-full h-[200px] bg-gray-700 flex items-center justify-center overflow-hidden">
                                 {content.poster_path ? (
                                     <img
-                                        src={`https://image.tmdb.org/t/p/w200${content.poster_path}`}
+                                        // ОНОВЛЕНО: Змінено розмір зображення на w300 для кращої якості
+                                        src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
                                         alt={content.title || content.name}
                                         className="w-full h-full object-cover"
                                     />
@@ -71,9 +77,7 @@ const NowWatching = () => {
                                     </div>
                                 )}
                             </div>
-                            <p className="text-white text-xs mt-1 text-center truncate w-24">
-                                {content.title || content.name}
-                            </p>
+                            {/* ВИДАЛЕНО: Назва фільму/серіалу під постером */}
                         </Link>
                     ))
                 ) : (

@@ -1,3 +1,4 @@
+// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\NewReleases.jsx
 import React, { useState, useEffect } from 'react';
 import { getNewReleases } from '../api/content';
 import { Link } from 'react-router-dom';
@@ -29,7 +30,7 @@ const NewReleases = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] ml-8 flex justify-center items-center h-[240px]">
+            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px]">
                 <Spinner />
             </div>
         );
@@ -37,29 +38,29 @@ const NewReleases = () => {
 
     if (error) {
         return (
-            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] ml-8 flex justify-center items-center h-[240px] text-red-500">
+            <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] flex justify-center items-center h-[240px] text-red-500">
                 Помилка: {error}
             </div>
         );
     }
 
     return (
-        <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px] ml-8">
+        <div className="bg-[#171717] rounded-[8px] p-4 shadow-md w-full max-w-[600px]">
             <h2 className="text-white font-bold text-[20px] mb-4">Новинки</h2>
 
             <div className="flex gap-4 overflow-x-auto pb-2">
                 {newReleases.length > 0 ? (
                     newReleases.map((content) => (
                         <Link
-                            // ОНОВЛЕНО ТУТ: використовуємо content.media_type і додаємо запасне значення 'movie'
                             to={`/content/${content.media_type || 'movie'}/${content.id}`}
                             key={content.id}
-                            className="flex-shrink-0"
+                            // ЗМІНЕНО: Висоту картки з h-[280px] на h-[200px], щоб прибрати порожній простір
+                            className="relative w-[150px] h-[200px] bg-[#272727] rounded-[10px] flex-shrink-0 overflow-hidden shadow-lg hover:scale-105 transition-transform duration-200 ease-in-out flex flex-col"
                         >
-                            <div className="w-[100px] h-[175px] bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                            <div className="w-full h-[200px] bg-gray-700 flex items-center justify-center overflow-hidden">
                                 {content.poster_path ? (
                                     <img
-                                        src={`https://image.tmdb.org/t/p/w200${content.poster_path}`}
+                                        src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
                                         alt={content.title || content.name}
                                         className="w-full h-full object-cover"
                                     />
@@ -69,9 +70,7 @@ const NewReleases = () => {
                                     </div>
                                 )}
                             </div>
-                            <p className="text-white text-xs mt-1 text-center truncate w-[100px]">
-                                {content.title || content.name}
-                            </p>
+                            {/* Назва фільму/серіалу під постером (видалено в попередніх кроках) */}
                         </Link>
                     ))
                 ) : (
