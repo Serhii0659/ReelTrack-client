@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUserPlus, FaCheck, FaTimes, FaTrash } from 'react-icons/fa';
 
 const FriendsPage = () => {
-    const { isAuthenticated, logout } = useAuth();
+    const { isAuthenticated, logout, user } = useAuth(); // Додано 'user' для доступу до ID поточного користувача
     const navigate = useNavigate();
 
     const [friends, setFriends] = useState([]);
@@ -68,7 +68,8 @@ const FriendsPage = () => {
 
 
     // ВИПРАВЛЕНО: handleAcceptRequest тепер приймає userId
-    const handleAcceptRequest = async (userId) => {
+    const handleAcceptRequest = async (userId, e) => {
+        e.stopPropagation(); // Зупиняємо спливання події, щоб не спрацьовувала навігація
         try {
             // Передаємо userId до API функції
             await acceptFriendRequest(userId);
@@ -87,12 +88,13 @@ const FriendsPage = () => {
     };
 
     // ВИПРАВЛЕНО: handleRejectOrRemove тепер приймає userId
-    const handleRejectOrRemove = async (userId, isRequest) => {
-         // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+    const handleRejectOrRemove = async (userId, isRequest, e) => {
+        e.stopPropagation(); // Зупиняємо спливання події, щоб не спрацьовувала навігація
+        // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
         if (!userId || typeof userId !== 'string' || userId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(userId)) {
-             toast.error('Невірний ID користувача.');
-             console.error('Attempted to reject/remove with invalid userId:', userId);
-             return;
+            toast.error('Невірний ID користувача.');
+            console.error('Attempted to reject/remove with invalid userId:', userId);
+            return;
         }
 
         try {
@@ -121,11 +123,36 @@ const FriendsPage = () => {
             toast.error('Будь ласка, введіть ID користувача.');
             return;
         }
-         // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+        // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
         if (friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)) {
-             toast.error('Невірний формат ID користувача.');
-             return;
+            toast.error('Невірний формат ID користувача.');
+            return;
         }
+        
+        // Перевірка, чи користувач не намагається додати себе
+        if (user && friendIdInput === user._id) {
+            toast.error('Ви не можете надіслати запит на дружбу самому собі.');
+            return;
+        }
+
+        // Перевірка, чи користувач вже є другом
+        if (friends.some(f => f._id === friendIdInput)) {
+            toast.info('Цей користувач вже у вас в друзях.');
+            setShowAddFriendModal(false);
+            setFriendIdInput('');
+            setSearchResult(null);
+            return;
+        }
+
+        // Перевірка, чи запит вже був надісланий
+        if (friendRequests.some(req => req._id === friendIdInput)) {
+            toast.info('Запит на дружбу цьому користувачу вже надіслано.');
+            setShowAddFriendModal(false);
+            setFriendIdInput('');
+            setSearchResult(null);
+            return;
+        }
+
 
         console.log('Attempting to send friend request to ID:', friendIdInput);
         try {
@@ -144,61 +171,84 @@ const FriendsPage = () => {
         }
     };
 
-     // Функція для пошуку користувача за ID (для модального вікна)
-     const handleSearchUser = async () => {
-         if (!friendIdInput) {
-             setSearchResult(null);
-             return;
-         }
-          // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
-         if (friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)) {
-             setSearchResult({ error: 'Невірний формат ID користувача.' });
-             return;
-         }
+    // Функція для пошуку користувача за ID (для модального вікна)
+    const handleSearchUser = async () => {
+        if (!friendIdInput) {
+            setSearchResult(null);
+            return;
+        }
+        // ВИПРАВЛЕНО: Перевіряємо, чи ID є валідним ObjectId перед відправкою на бекенд
+        if (friendIdInput.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(friendIdInput)) {
+            setSearchResult({ error: 'Невірний формат ID користувача.' });
+            return;
+        }
+        
+        // Перевірка, чи ID, який шукають, не є ID поточного користувача
+        if (user && friendIdInput === user._id) {
+            setSearchResult({ error: 'Це ваш власний ID.' });
+            return;
+        }
+        // Перевірка, чи користувач вже є другом
+        if (friends.some(f => f._id === friendIdInput)) {
+            setSearchResult({ error: 'Цей користувач вже у вас в друзях.' });
+            return;
+        }
+        // Перевірка, чи запит вже був надісланий
+        if (friendRequests.some(req => req._id === friendIdInput)) {
+            setSearchResult({ error: 'Запит на дружбу цьому користувачу вже надіслано.' });
+            return;
+        }
 
-         setSearching(true);
-         setSearchResult(null);
-         try {
-             // ВИПРАВЛЕНО: Викликаємо searchUsers або іншу функцію для пошуку користувача за ID
-             // Припускаємо, що searchUsers може шукати за ID, або вам потрібна нова функція API
-             // Якщо searchUsers шукає лише за іменем, вам потрібен новий API ендпоінт та функція
-             // Припускаємо, що `searchUsers` тепер може приймати ID і повертати масив з 0 або 1 користувачем
-             const users = await searchUsers(friendIdInput); // Припускаємо, що searchUsers працює з ID
-             if (users && users.length > 0) {
-                 // Перевіряємо, чи знайдений користувач не є поточним користувачем
-                 // (потрібен доступ до ID поточного користувача, можливо з useAuth)
-                 // const currentUser = useAuth().user; // Отримайте поточного користувача
-                 // if (users[0]._id === currentUser._id) {
-                 //     setSearchResult({ error: 'Це ваш власний ID.' });
-                 // } else {
-                      setSearchResult(users[0]); // Припускаємо, що повертається масив, беремо першого
-                 // }
-             } else {
-                 setSearchResult({ error: 'Користувача з таким ID не знайдено.' });
-             }
-         } catch (err) {
-             console.error('Помилка пошуку користувача:', err);
-             setSearchResult({ error: err.response?.data?.message || 'Не вдалося знайти користувача.' });
-         } finally {
-             setSearching(false);
-         }
-     };
+
+        setSearching(true);
+        setSearchResult(null);
+        try {
+            // ВИПРАВЛЕНО: Викликаємо searchUsers або іншу функцію для пошуку користувача за ID
+            // Припускаємо, що searchUsers може шукати за ID, або вам потрібна нова функція API
+            // Якщо searchUsers шукає лише за іменем, вам потрібен новий API ендпоінт та функція
+            // Припускаємо, що `searchUsers` тепер може приймати ID і повертати масив з 0 або 1 користувачем
+            const users = await searchUsers(friendIdInput); // Припускаємо, що searchUsers працює з ID
+            if (users && users.length > 0) {
+                setSearchResult(users[0]); // Припускаємо, що повертається масив, беремо першого
+            } else {
+                setSearchResult({ error: 'Користувача з таким ID не знайдено.' });
+            }
+        } catch (err) {
+            console.error('Помилка пошуку користувача:', err);
+            setSearchResult({ error: err.response?.data?.message || 'Не вдалося знайти користувача.' });
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    // Функція для переходу на сторінку профілю
+    const handleViewProfile = (userId) => {
+        if (user && userId === user._id) {
+            // Якщо ID друга збігається з ID поточного користувача, можна перейти на власну сторінку MyLibrary
+            // або просто нічого не робити, оскільки користувач вже на своїй сторінці друзів.
+            // Але для уніфікації можна перенаправити на /mylibrary або /profile/:userId (свій власний)
+            toast.info("Це ваш профіль!");
+            // navigate('/mylibrary'); // Або navigate(`/profile/${userId}`);
+            return;
+        }
+        navigate(`/profile/${userId}`);
+    };
 
 
     if (!isAuthenticated) {
         // Відображаємо повідомлення, якщо користувач не автентифікований
-         return (
-             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                 <Header />
-                 <p>Будь ласка, увійдіть, щоб переглянути друзів.</p>
-             </div>
-         );
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
+                <Header />
+                <p>Будь ласка, увійдіть, щоб переглянути друзів.</p>
+            </div>
+        );
     }
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-400 pt-24">
-                 <Header />
+                <Header />
                 Завантаження друзів та запитів...
             </div>
         );
@@ -207,7 +257,7 @@ const FriendsPage = () => {
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
-                 <Header />
+                <Header />
                 Помилка: {error}
             </div>
         );
@@ -219,7 +269,7 @@ const FriendsPage = () => {
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Друзі</h1>
 
-                {/* Кнопка для відкриття модального вікна "Додати друга" */}
+                {/* Кнопка для відкриття модального вікна "Додати Друга" */}
                 <div className="flex justify-center mb-8">
                     <button
                         onClick={() => {
@@ -259,20 +309,23 @@ const FriendsPage = () => {
                         ) : (
                             <ul className="space-y-4">
                                 {friends.map(friend => (
-                                    // ВИПРАВЛЕНО: friend.username замінено на friend.name згідно з моделлю User
                                     <li key={friend._id} className="flex items-center justify-between bg-[#2a2a2a] p-4 rounded-md shadow">
-                                        <div className="flex items-center space-x-4">
+                                        {/* Зроблено клікабельним блок з інформацією про друга */}
+                                        <div
+                                            className="flex items-center space-x-4 cursor-pointer flex-grow" // flex-grow, щоб зайняти більше місця
+                                            onClick={() => handleViewProfile(friend._id)}
+                                        >
                                             <img
                                                 src={friend.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
-                                                alt={friend.name || 'Без імені'} // ВИПРАВЛЕНО: friend.username
+                                                alt={friend.name || 'Без імені'}
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
                                             />
-                                            <span className="text-lg font-medium text-white">{friend.name || 'Невідомий'}</span> {/* ВИПРАВЛЕНО: friend.username */}
+                                            <span className="text-lg font-medium text-white">{friend.name || 'Невідомий'}</span>
                                         </div>
                                         <button
-                                            // ВИПРАВЛЕНО: Передаємо friend._id
-                                            onClick={() => handleRejectOrRemove(friend._id, false)}
-                                            className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
+                                            // ВИПРАВЛЕНО: Передаємо friend._id та об'єкт події
+                                            onClick={(e) => handleRejectOrRemove(friend._id, false, e)}
+                                            className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1 ml-4" // Додано ml-4 для відступу
                                         >
                                             <FaTrash /> <span className="hidden sm:inline">Видалити</span>
                                         </button>
@@ -291,29 +344,30 @@ const FriendsPage = () => {
                         ) : (
                             <ul className="space-y-4">
                                 {friendRequests.map(request => (
-                                     // ВИПРАВЛЕНО: request._id тепер є ID користувача, який надіслав запит
                                     <li key={request._id} className="flex items-center justify-between bg-[#2a2a2a] p-4 rounded-md shadow">
-                                        <div className="flex items-center space-x-4">
-                                            {/* ВИПРАВЛЕНО: request.avatarUrl та request.name */}
+                                        {/* Зроблено клікабельним блок з інформацією про користувача, який надіслав запит */}
+                                        <div
+                                            className="flex items-center space-x-4 cursor-pointer flex-grow" // flex-grow, щоб зайняти більше місця
+                                            onClick={() => handleViewProfile(request._id)}
+                                        >
                                             <img
                                                 src={request.avatarUrl || 'https://via.placeholder.com/50?text=👤'}
                                                 alt={request.name || 'Без імені'}
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
                                             />
-                                            {/* ВИПРАВЛЕНО: request.name */}
                                             <span className="text-lg font-medium text-white">{request.name || 'Невідомий'}</span>
                                         </div>
-                                        <div className="flex space-x-2">
+                                        <div className="flex space-x-2 ml-4"> {/* Додано ml-4 для відступу */}
                                             <button
-                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача)
-                                                onClick={() => handleAcceptRequest(request._id)}
+                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача) та об'єкт події
+                                                onClick={(e) => handleAcceptRequest(request._id, e)}
                                                 className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
                                             >
                                                 <FaCheck /> <span className="hidden sm:inline">Прийняти</span>
                                             </button>
                                             <button
-                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача)
-                                                onClick={() => handleRejectOrRemove(request._id, true)}
+                                                // ВИПРАВЛЕНО: Передаємо request._id (це ID користувача) та об'єкт події
+                                                onClick={(e) => handleRejectOrRemove(request._id, true, e)}
                                                 className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-md transition-colors flex items-center space-x-1"
                                             >
                                                 <FaTimes /> <span className="hidden sm:inline">Відхилити</span>
@@ -387,7 +441,7 @@ const FriendsPage = () => {
 
 
                             <div className="flex justify-end">
-                                 {/* Кнопка "Надіслати Запит" - активна лише якщо користувач знайдений і немає помилки */}
+                                {/* Кнопка "Надіслати Запит" - активна лише якщо користувач знайдений і немає помилки */}
                                 <button
                                     onClick={handleSendFriendRequest}
                                     disabled={!searchResult || searchResult.error || searching} // Вимикаємо, якщо немає результату, є помилка, або йде пошук
