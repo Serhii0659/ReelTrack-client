@@ -33,7 +33,7 @@ function RegisterPage() {
         <div
             className="w-screen h-screen bg-cover bg-center relative flex items-center justify-center"
             style={{
-                backgroundImage: "url('/src/image/imageLogin.png')",
+                backgroundImage: "url('/imageLogin.png')",
                 fontFamily: "'IBM Plex Mono', monospace"
             }}
         >

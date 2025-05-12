@@ -33,7 +33,7 @@ function LoginPage() {
         <div
             className="min-h-screen w-full flex items-center justify-center bg-cover bg-center"
             style={{
-                backgroundImage: "url('/src/image/imageLogin.png')",
+                backgroundImage: "url('/imageLogin.png')",
                 fontFamily: "'IBM Plex Mono', monospace"
             }}
         >
