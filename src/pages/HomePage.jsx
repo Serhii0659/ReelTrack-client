@@ -39,7 +39,7 @@ const HomePage = () => {
           </div>
 
           {/* Відгуки та Соціальна стрічка з горизонтальним відступом */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-60 gap-y-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-4 mt-6">
             <div className="grid-item">
               <ReviewTabs />
             </div>
