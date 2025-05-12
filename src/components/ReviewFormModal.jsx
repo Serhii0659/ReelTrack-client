@@ -83,7 +83,7 @@ const ReviewFormModal = ({ isOpen, item, onClose, onSubmit, existingReview, cont
                         {existingReview ? 'Редагувати відгук' : 'Оцінити'}{' '}
                         {item?.title || item?.name}
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white text-white text-3xl leading-none">&times;</button>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
                 </div>
 
                 <form onSubmit={handleSubmit}>

@@ -1,26 +1,22 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\MovieCard.jsx
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import RatingPieChart from './RatingPieChart'; // <--- ДОДАЙТЕ ЦЕЙ ІМПОРТ
+import RatingPieChart from './RatingPieChart';
 
-const MovieCard = ({ item, onRemove }) => {
+const MovieCard = ({ item, onRemove, onUpdate }) => {
     const getPosterUrl = (posterPath) => {
-        return posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : 'https://via.placeholder.com/200x300?text=No+Poster';
+        // Використовуємо розмір постера w300 для більш компактних карток
+        return posterPath ? `https://image.tmdb.org/t/p/w300${posterPath}` : 'https://via.placeholder.com/200x300?text=Без+постера';
     };
 
     const releaseYear = item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'Невідомий';
 
-    // <--- ДОДАЙТЕ ЦЮ ЛОГІКУ ДЛЯ РЕЙТИНГУ
-    // Використовуємо userRating, якщо він є, інакше mediaRating
-    // Перевіряємо на undefined та null, щоб уникнути відображення 0, якщо рейтинг ще не встановлено
     const displayRating = (item.userRating !== undefined && item.userRating !== null && item.userRating > 0)
-                          ? item.userRating
-                          : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
-                            ? item.mediaRating
-                            : null; // Якщо немає жодного дійсного рейтингу, встановлюємо в null
+                            ? item.userRating
+                            : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
+                                ? item.mediaRating
+                                : null;
 
-    // <--- ДОДАЙТЕ ЦІ КОНСОЛЬНІ ЛОГИ ДЛЯ ДЕБАГУ
     console.log('--- MovieCard Debug ---');
     console.log('Item ID:', item._id);
     console.log('Item Title:', item.title);
@@ -29,8 +25,24 @@ const MovieCard = ({ item, onRemove }) => {
     console.log('displayRating (sent to chart):', displayRating, typeof displayRating);
     console.log('--- End MovieCard Debug ---');
 
+    // Функція для зміни статусу елемента
+    const handleChangeStatus = (newStatus) => {
+        if (item.status !== newStatus) { // Оновлюємо лише якщо статус відрізняється
+            onUpdate(item._id, { status: newStatus });
+        }
+    };
+
+    // Масив кнопок статусів
+    const statusButtons = [
+        { key: 'watching', text: 'Переглядаю', color: 'bg-blue-600' },
+        { key: 'completed', text: 'Завершено', color: 'bg-green-600' },
+        { key: 'plan_to_watch', text: 'Запланую', color: 'bg-purple-600' },
+        { key: 'on_hold', text: 'На паузі', color: 'bg-yellow-600' },
+        { key: 'dropped', text: 'Закинуто', color: 'bg-red-600' },
+    ];
+
     return (
-        <div className="bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
+        <div className="w-64 bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
             {/* Обгортаємо основний вміст картки у Link для переходу на сторінку деталей */}
             <Link
                 to={`/content/${item.mediaType}/${item.externalId}`}
@@ -45,7 +57,6 @@ const MovieCard = ({ item, onRemove }) => {
                 <p className="text-gray-400 text-sm mb-2">Фільм ({releaseYear})</p>
             </Link>
 
-            {/* <--- ДОДАЙТЕ ЦЕЙ БЛОК З РЕНДЕРИНГОМ ДІАГРАМИ РЕЙТИНГУ */}
             {displayRating !== null && ( // Рендеримо тільки якщо є дійсний рейтинг
                 <div
                     className="rating-display"
@@ -53,18 +64,41 @@ const MovieCard = ({ item, onRemove }) => {
                         position: 'absolute',
                         top: '10px',
                         right: '10px',
-                        zIndex: 10, // Переконаємося, що діаграма знаходиться поверх інших елементів
-                        backgroundColor: 'rgba(0,0,0,0.7)', // Додамо фон для кращої видимості
-                        borderRadius: '50%', // Зробимо фон круглим
-                        padding: '5px' // Додамо трохи відступу
+                        zIndex: 10,
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        borderRadius: '50%',
+                        padding: '5px'
                     }}
                 >
-                    <RatingPieChart rating={displayRating} size={50} showTooltip={false} /> {/* Зменшив size для MovieCard */}
+                    <RatingPieChart rating={displayRating} size={50} showTooltip={false} />
                 </div>
             )}
 
+            {/* Блок для кнопок зміни статусу */}
+            <div className="flex flex-wrap justify-center gap-2 mt-4 mb-4">
+                {statusButtons.map((btn) => (
+                    <button
+                        key={btn.key}
+                        onClick={(e) => { // Запобігаємо переходу по посиланню
+                            e.preventDefault(); 
+                            e.stopPropagation();
+                            handleChangeStatus(btn.key);
+                        }}
+                        className={`${btn.color} text-white text-xs py-1 px-2 rounded-md transition-colors 
+                                    ${item.status === btn.key ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
+                        disabled={item.status === btn.key} // Деактивуємо кнопку, якщо це поточний статус
+                    >
+                        {btn.text}
+                    </button>
+                ))}
+            </div>
+
             <button
-                onClick={() => onRemove(item._id, item.title)}
+                onClick={(e) => { // Запобігаємо переходу по посиланню
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    onRemove(item._id, item.title);
+                }}
                 className="mt-auto bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors flex items-center space-x-2"
             >
                 <FaTrash />
@@ -75,4 +109,3 @@ const MovieCard = ({ item, onRemove }) => {
 };
 
 export default MovieCard;
-

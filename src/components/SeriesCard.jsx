@@ -1,32 +1,29 @@
-// C:\Users\kreps\Documents\Projects\ReelTrack\client\src\components\SeriesCard.jsx
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import RatingPieChart from './RatingPieChart'; // <--- ДОДАЙТЕ ЦЕЙ ІМПОРТ
+import RatingPieChart from './RatingPieChart';
 
 // Компонент для відображення картки серіалу в бібліотеці користувача
-const SeriesCard = ({ item, onRemove }) => {
+const SeriesCard = ({ item, onRemove, onUpdate }) => {
     // item - об'єкт серіалу з бібліотеки користувача (структура WatchlistItem)
     // onRemove - функція, яка викликається при видаленні серіалу
+    // onUpdate - функція, яка викликається при оновленні статусу елемента
 
     // Допоміжна функція для формування URL постера TMDB
     const getPosterUrl = (posterPath) => {
-        // Використовуємо розмір постера w500 для кращої якості
-        return posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : 'https://via.placeholder.com/200x300?text=No+Poster';
+        // Використовуємо розмір постера w300 для більш компактних карток
+        return posterPath ? `https://image.tmdb.org/t/p/w300${posterPath}` : 'https://via.placeholder.com/200x300?text=Без+постера';
     };
 
     // Отримуємо рік з поля releaseDate (яке використовується для обох типів контенту в WatchlistItem)
-    // Для серіалів, можливо, краще використовувати item.firstAirDate, якщо воно є, але item.releaseDate теж підійде, якщо так надходять дані
     const releaseYear = item.releaseDate ? new Date(item.releaseDate).getFullYear() : 'Невідомий';
 
-    // <--- ДОДАЙТЕ ЦЮ ЛОГІКУ ДЛЯ РЕЙТИНГУ (аналогічно MovieCard)
     const displayRating = (item.userRating !== undefined && item.userRating !== null && item.userRating > 0)
-                          ? item.userRating
-                          : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
-                            ? item.mediaRating
-                            : null; // Якщо немає жодного дійсного рейтингу, встановлюємо в null
+                            ? item.userRating
+                            : (item.mediaRating !== undefined && item.mediaRating !== null && item.mediaRating > 0)
+                                ? item.mediaRating
+                                : null;
 
-    // <--- ДОДАЙТЕ ЦІ КОНСОЛЬНІ ЛОГИ ДЛЯ ДЕБАГУ (аналогічно MovieCard)
     console.log('--- SeriesCard Debug ---');
     console.log('Item ID:', item._id);
     console.log('Item Title:', item.title);
@@ -35,28 +32,42 @@ const SeriesCard = ({ item, onRemove }) => {
     console.log('displayRating (sent to chart):', displayRating, typeof displayRating);
     console.log('--- End SeriesCard Debug ---');
 
+    // Функція для зміни статусу елемента
+    const handleChangeStatus = (newStatus) => {
+        if (item.status !== newStatus) { // Оновлюємо лише якщо статус відрізняється
+            onUpdate(item._id, { status: newStatus });
+        }
+    };
+
+    // Масив кнопок статусів
+    const statusButtons = [
+        { key: 'watching', text: 'Переглядаю', color: 'bg-blue-600' },
+        { key: 'completed', text: 'Завершено', color: 'bg-green-600' },
+        { key: 'plan_to_watch', text: 'Запланую', color: 'bg-purple-600' },
+        { key: 'on_hold', text: 'На паузі', color: 'bg-yellow-600' },
+        { key: 'dropped', text: 'Закинуто', color: 'bg-red-600' },
+    ];
+
     return (
-        // Картка серіалу з фоном, тінями та округлими кутами
-        <div className="bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
+        // Картка серіалу з фіксованою шириною (w-64), фоном, тінями та округлими кутами
+        <div className="w-64 bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden flex flex-col items-center text-center p-4 relative">
             {/* Обгортаємо основний вміст картки у Link для переходу на сторінку деталей контенту */}
-            {/* Маршрут до деталей контенту: /content/mediaType/tmdbId */}
             <Link
-                to={`/content/${item.mediaType}/${item.externalId}`} // ВИПРАВЛЕНО: Коректний шлях Link
+                to={`/content/${item.mediaType}/${item.externalId}`}
                 className="flex flex-col items-center text-center w-full"
             >
                 {/* Зображення постера */}
                 <img
-                    src={getPosterUrl(item.posterPath)} // ВИПРАВЛЕНО: Використовуємо posterPath з об'єкта item
-                    alt={item.title || 'Назва серіалу'} // ВИПРАВЛЕНО: Використовуємо title
+                    src={getPosterUrl(item.posterPath)}
+                    alt={item.title || 'Назва серіалу'}
                     className="w-full h-auto object-cover rounded-md mb-4"
                 />
                 {/* Назва серіалу */}
-                <h3 className="text-xl font-semibold mb-2 line-clamp-2 text-white">{item.title}</h3> {/* ВИПРАВЛЕНО: Використовуємо title */}
+                <h3 className="text-xl font-semibold mb-2 line-clamp-2 text-white">{item.title}</h3>
                 {/* Тип контенту та рік */}
-                <p className="text-gray-400 text-sm mb-2">Серіал ({releaseYear})</p> {/* ВИПРАВЛЕНО: Використовуємо releaseYear */}
+                <p className="text-gray-400 text-sm mb-2">Серіал ({releaseYear})</p>
             </Link>
 
-            {/* <--- ДОДАЙТЕ ЦЕЙ БЛОК З РЕНДЕРИНГОМ ДІАГРАМИ РЕЙТИНГУ (аналогічно MovieCard) */}
             {displayRating !== null && ( // Рендеримо тільки якщо є дійсний рейтинг
                 <div
                     className="rating-display"
@@ -70,14 +81,36 @@ const SeriesCard = ({ item, onRemove }) => {
                         padding: '5px'
                     }}
                 >
-                    <RatingPieChart rating={displayRating} size={50} showTooltip={false} /> {/* Зменшив size для SeriesCard */}
+                    <RatingPieChart rating={displayRating} size={50} showTooltip={false} />
                 </div>
             )}
 
+            {/* Блок для кнопок зміни статусу */}
+            <div className="flex flex-wrap justify-center gap-2 mt-4 mb-4">
+                {statusButtons.map((btn) => (
+                    <button
+                        key={btn.key}
+                        onClick={(e) => { // Запобігаємо переходу по посиланню
+                            e.preventDefault(); 
+                            e.stopPropagation();
+                            handleChangeStatus(btn.key);
+                        }}
+                        className={`${btn.color} text-white text-xs py-1 px-2 rounded-md transition-colors 
+                                    ${item.status === btn.key ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
+                        disabled={item.status === btn.key} // Деактивуємо кнопку, якщо це поточний статус
+                    >
+                        {btn.text}
+                    </button>
+                ))}
+            </div>
+
             {/* Кнопка видалення */}
-            {/* При кліку викликаємо onRemove, передаючи ID елемента бібліотеки та його назву */}
             <button
-                onClick={() => onRemove(item._id, item.title)} // ВИПРАВЛЕНО: Передаємо _id елемента бібліотеки та title
+                onClick={(e) => { // Запобігаємо переходу по посиланню
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    onRemove(item._id, item.title);
+                }}
                 className="mt-auto bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors flex items-center space-x-2"
             >
                 <FaTrash /> {/* Іконка кошика */}
