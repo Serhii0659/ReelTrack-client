@@ -57,7 +57,7 @@ function UserStatistics() {
 
     if (loading) {
         return (
-            <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mt-[35px] flex items-center justify-center">
+            <div className="w-full max-w-[600px] h-[410px] bg-[#171717] p-6 rounded-[20px] text-white shadow-md mt-[35px] flex items-center justify-center">
                 Завантаження статистики...
             </div>
         );
@@ -65,14 +65,14 @@ function UserStatistics() {
 
     if (error) {
         return (
-            <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-red-500 shadow-md mt-[35px] flex items-center justify-center">
+            <div className="w-full max-w-[600px] h-[410px] bg-[#171717] p-6 rounded-[20px] text-red-500 shadow-md mt-[35px] flex items-center justify-center">
                 Помилка: {error}
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-[600px] h-[410px] bg-[#272727] p-6 rounded-[20px] text-white shadow-md mt-[35px]">
+        <div className="w-full max-w-[600px] h-[410px] bg-[#171717] p-6 rounded-[20px] text-white shadow-md mt-[35px]">
             <h3 className="text-white font-bold text-4xl text-center mb-6">
                 Ваша статистика
             </h3>

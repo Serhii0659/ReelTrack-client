@@ -68,7 +68,7 @@ const SearchBar = ({ placeholder = "Пошук фільмів або серіа�
                 placeholder={placeholder}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full p-3 rounded-lg bg-[#222222] border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 rounded-lg bg-[#222222] border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
             {loading && query.length >= 2 && (
                 <div className="absolute top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-lg p-2 text-center text-gray-400 z-20">

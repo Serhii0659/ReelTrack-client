@@ -283,7 +283,7 @@ const MyLibraryPage = () => {
     return (
         <div className="bg-[#171717] min-h-screen text-white pt-24">
             <div className="container mx-auto p-6">
-                <h1 className="text-4xl font-bold mb-8 text-center text-[#e50914]">Моя Бібліотека</h1>
+                <h1 className="text-4xl font-bold mb-8 text-center text-white">Моя Бібліотека</h1>
 
                 {/* НОВА СТРУКТУРА: Flex контейнер для розташування поруч */}
                 <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-8">
@@ -301,13 +301,13 @@ const MyLibraryPage = () => {
                         <div className="flex justify-center mb-8">
                             <button
                                 onClick={() => setActiveTab('watchlist')}
-                                className={`py-2 px-6 text-lg font-semibold rounded-l-lg transition-colors ${activeTab === 'watchlist' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                                className={`py-2 px-6 text-lg font-semibold rounded-l-lg transition-colors ${activeTab === 'watchlist' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                             >
                                 Список Перегляду ({watchlistItems.length})
                             </button>
                             <button
                                 onClick={() => setActiveTab('reviews')}
-                                className={`py-2 px-6 text-lg font-semibold rounded-r-lg transition-colors ${activeTab === 'reviews' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                                className={`py-2 px-6 text-lg font-semibold rounded-r-lg transition-colors ${activeTab === 'reviews' ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                             >
                                 Мої Відгуки ({userReviews.length})
                             </button>
@@ -322,7 +322,6 @@ const MyLibraryPage = () => {
                                     <SearchBar
                                         searchTerm={searchTerm}
                                         onSearchChange={setSearchTerm}
-                                        placeholder="Пошук за назвою, жанром або нотатками..."
                                     />
                                 </div>
 
@@ -409,7 +408,7 @@ const MyLibraryPage = () => {
 
                         {activeTab === 'reviews' && (
                             <div className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg">
-                                <h2 className="text-2xl font-bold mb-4 text-center text-white">Мої Відгуки та Оцінки</h2>
+                                <h2 className="text-2xl font-bold mb-4 text-center text-white">Ваші оцінки</h2>
                                 {loadingReviews ? (
                                     <div className="flex justify-center"><Spinner /></div>
                                 ) : userReviews.length === 0 ? (
