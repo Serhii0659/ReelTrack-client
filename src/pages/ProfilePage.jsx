@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { fetchUserProfile, updateUserProfile } from '../api/user';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-// Імпорт сторінки бібліотеки. Припускається, що файл знаходиться за шляхом './pages/MyLibraryPage.jsx' відносно поточної папки.
 import { toast } from 'react-toastify';
 import { useNavigate, Link } from 'react-router-dom';
+
 
 const ProfilePage = () => {
     // Отримуємо поточного авторизованого користувача та функцію logout з AuthContext
@@ -20,6 +20,9 @@ const ProfilePage = () => {
     const [error, setError] = useState(null);
     // Стан для перемикання між режимами перегляду та редагування
     const [isEditing, setIsEditing] = useState(false);
+    // ВИДАЛЕНО: Стан для перемикання між секціями "Профіль" та "Мої Списки"
+    // const [activeSection, setActiveSection] = useState('profile'); // 'profile' або 'library'
+
     // Стан для даних форми редагування
     const [formData, setFormData] = useState({
         // ВИПРАВЛЕНО: Використовуємо 'name' замість 'username' відповідно до бекенду
@@ -142,8 +145,8 @@ const ProfilePage = () => {
             // Оновити стан користувача в AuthContext, якщо дані користувача змінились
             // Припускаємо, що AuthContext має функцію setUser або refreshUser
             // if (updatedProfile) {
-            //    // authUser.setUser(updatedProfile); // Якщо є така функція в контексті
-            //    // Або просто оновити локальний стан користувача в контексті, якщо він там зберігається
+            //    // authUser.setUser(updatedProfile); // Якщо є така функція в контексті
+            //    // Або просто оновити локальний стан користувача в контексті, якщо він там зберігається
             // }
         } catch (err) {
             console.error('Помилка оновлення профілю:', err);
@@ -199,9 +202,9 @@ const ProfilePage = () => {
     // Відображення помилки, якщо користувач не авторизований
     if (error && !authUser) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-red-500 pt-24">
+            <div className="flex items-center justify-center min-h-screen bg-[#171717] text-gray-500 pt-24">
                 <Header /> {/* Додано Header */}
-                <p>Помилка: {error}. <Link to="/login" className="text-blue-500 hover:underline">Увійти</Link></p>
+                <p>Помилка: {error}. <Link to="/login" className="text-gray-500 hover:underline">Увійти</Link></p>
             </div>
         );
     }
@@ -223,17 +226,18 @@ const ProfilePage = () => {
             <div className="container mx-auto p-6">
                 <h1 className="text-4xl font-bold mb-8 text-center text-white">Ваш Профіль</h1>
 
-                <div className="bg-[#1e1e1e] p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+                <div className="bg-[#171717] p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+
                     {/* Відображення помилок в межах форми */}
                     {error && (
-                        <div className="bg-red-900 text-red-300 p-3 rounded-md mb-4">
+                        <div className="bg-gray-900 text-gray-300 p-3 rounded-md mb-4">
                             {error}
                         </div>
                     )}
 
-                    {/* Умовне відображення форми редагування або даних профілю */}
+                    {/* Залишено лише відображення профілю, оскільки секції "Мої Списки" більше немає */}
                     {isEditing ? (
-                        // Форма редагування
+                        // Форма редагування профілю
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 {/* ВИПРАВЛЕНО: Лейбл та поле для 'name' */}
@@ -244,7 +248,7 @@ const ProfilePage = () => {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#2a2a2a] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
+                                    className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                     required
                                 />
                             </div>
@@ -256,7 +260,7 @@ const ProfilePage = () => {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#2a2a2a] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
+                                    className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                     required
                                 />
                             </div>
@@ -273,7 +277,7 @@ const ProfilePage = () => {
                                         name="currentPassword"
                                         value={formData.currentPassword}
                                         onChange={handleChange}
-                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#2a2a2a] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
+                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                         placeholder="Введіть поточний пароль"
                                         // Поле обов'язкове, тільки якщо введено новий пароль
                                         required={!!formData.newPassword}
@@ -287,7 +291,7 @@ const ProfilePage = () => {
                                         name="newPassword"
                                         value={formData.newPassword}
                                         onChange={handleChange}
-                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#2a2a2a] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
+                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                         placeholder="Введіть новий пароль"
                                     />
                                 </div>
@@ -299,7 +303,7 @@ const ProfilePage = () => {
                                         name="confirmNewPassword"
                                         value={formData.confirmNewPassword}
                                         onChange={handleChange}
-                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#2a2a2a] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
+                                        className="shadow appearance-none border rounded w-full py-3 px-4 text-white bg-[#171717] leading-tight focus:outline-none focus:shadow-outline border-gray-700"
                                         placeholder="Підтвердіть новий пароль"
                                     />
                                 </div>
@@ -314,7 +318,7 @@ const ProfilePage = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                                 >
                                     Зберегти Зміни
                                 </button>
@@ -353,26 +357,18 @@ const ProfilePage = () => {
                             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full justify-center mt-6 pt-6 border-t border-gray-700">
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
+                                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    Налаштування Профілю
+                                    Редагувати Профіль
                                 </button>
-                                <Link
-                                    to="/library" // Припустимо, що це шлях до сторінки списків
-                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                    </svg>
-                                    Мої Списки
-                                </Link>
+                                {/* Додано кнопку "Вийти" тут, оскільки її видалено з верхньої панелі, але функціонал залишено */}
                                 <button
                                     onClick={logout}
-                                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
+                                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
